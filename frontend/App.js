@@ -4,9 +4,9 @@ import React, { useEffect, useRef } from "react";
 import { StyleSheet, View, ImageBackground, Animated } from "react-native";
 import { TamaguiProvider } from "tamagui";
 import config from "./tamagui.config";
-import { Button, XStack, Image } from "tamagui";  
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Button, XStack, Image } from "tamagui";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Conversation from "./Conversation";
 
 
@@ -20,6 +20,30 @@ const Home = ({navigation}) => {
     Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
     InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
   });
+
+  const startCheckInAnimations = () => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(logoTranslateY, {
+          toValue: -300,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonsTranslateY, {
+          toValue: 2000,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+
+      Animated.timing(backgroundTranslateY, {
+        toValue: -800,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    navigation.navigate('Conversation');
+  };
 
   useEffect(() => {
     if (loaded) {
@@ -40,7 +64,7 @@ const Home = ({navigation}) => {
         // Once the parallel animations are done, execute this one.
         Animated.timing(buttonsTranslateY, {
           toValue: 0,
-          duration: 500,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ]).start();
@@ -51,35 +75,35 @@ const Home = ({navigation}) => {
     return null;
   }
 
-  return(
+  return (
     <TamaguiProvider config={config}>
-    <View style={styles.container}>
-      <Animated.View
-        style={{
-          ...styles.backgroundImageContainer,
-          transform: [{ translateY: backgroundTranslateY }],
-        }}
-      >
-        <ImageBackground
-          source={require("./assets/backdrop.png")}
-          resizeMode="cover"
-          style={styles.backgroundImage}
+      <View style={styles.container}>
+        <Animated.View
+          style={{
+            ...styles.backgroundImageContainer,
+            transform: [{ translateY: backgroundTranslateY }],
+          }}
         >
-          <Animated.View
-            style={{
-              ...styles.logoContainer,
-              transform: [{ translateY: logoTranslateY }],
-            }}
+          <ImageBackground
+            source={require("./assets/backdrop.png")}
+            resizeMode="cover"
+            style={styles.backgroundImage}
           >
-            <Image
+            <Animated.View
               style={{
-                resizeMode: "cover",
-                height: 100,
-                width: 350,
+                ...styles.logoContainer,
+                transform: [{ translateY: logoTranslateY }],
               }}
-              source={require("./assets/logo.png")}
-            />
-          </Animated.View>
+            >
+              <Image
+                style={{
+                  resizeMode: "cover",
+                  height: 100,
+                  width: 350,
+                }}
+                source={require("./assets/logo.png")}
+              />
+            </Animated.View>
 
           <Animated.View
             style={{
@@ -94,7 +118,7 @@ const Home = ({navigation}) => {
                 fontSize={21}
                 backgroundColor={"white"}
                 color={"$blue9"}
-                onPress={() => navigation.navigate('Conversation')}
+                onPress={() => startCheckInAnimations()}
               >
                 Check In
               </Button>
@@ -120,10 +144,8 @@ const Home = ({navigation}) => {
   )
 }
 
-
 const Stack = createNativeStackNavigator();
 export default function App() {
-
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
