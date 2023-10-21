@@ -1,9 +1,14 @@
 import { TamaguiProvider, Button } from "tamagui";
 import config from "./tamagui.config";
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Image, Animated, Easing, StyleSheet } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, Animated, Easing, StyleSheet, Button as Btn } from 'react-native';
 import {AnimatedSprite} from 'react-native-animated-sprite'
 import Logo from './assets/logo.png'
+import { Camera } from 'expo-camera';
+import { Video } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
+import axios from "axios";
+
 
 const EyeTracking = ({navigation}) => {
 
@@ -12,6 +17,86 @@ const EyeTracking = ({navigation}) => {
     const iterationCount = useRef(0);
     const [hasMoved, setHasMoved] = useState(false);
   
+    const [hasCameraPermission, setHasCameraPermission] =useState(null);
+    const [hasAudioPermission, setHasAudioPermission] = useState(null);
+    const [camera, setCamera] = useState(null);
+    const [record, setRecord] = useState(null);
+    const [type, setType] = useState(Camera.Constants.Type.front);    
+
+
+    useEffect(() => {
+        (async () => {
+            const cameraStatus = await Camera.requestCameraPermissionsAsync();
+            setHasCameraPermission(cameraStatus.status === 'granted');
+            const audioStatus = await Camera.requestMicrophonePermissionsAsync();
+            setHasAudioPermission(audioStatus.status === 'granted');
+        })();
+    }, []);
+
+    useEffect(() => {
+        const sendVideo = async () => {
+            if(record) {
+                // Create a file name for the recording
+                const fileName = `video-${Date.now()}.mov`;
+
+                // Move the recording to the new directory with the new file name
+                await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'videos/', { intermediates: true });
+                await FileSystem.moveAsync({
+                    from: record,
+                    to: FileSystem.documentDirectory + 'videos/' + `${fileName}`
+                });
+
+                // upload the uri and send the post
+                uploadVideo(FileSystem.documentDirectory + 'videos/' + `${fileName}`);
+            }
+        }
+        sendVideo();
+    }, [record])
+
+    const takeVideo = async () => {
+    if(camera){
+        const data = await camera.recordAsync()
+        setRecord(data.uri);
+        console.log(data.uri);
+    }
+    }
+
+    const stopVideo = async () => {
+        camera.stopRecording();
+    }
+
+    const uploadVideo = async (videoURI) => {
+        if (!videoURI) return;
+
+        const data = new FormData();
+        data.append('file', {
+            uri: videoURI,
+            name: 'video.mov',
+            type: 'video/mov',
+        });
+
+        try {
+            const response = await axios.post('http://0.0.0.0:8080/upload_video/', data);
+            console.log('Uploaded and transcribed: ', response.data);
+        } catch (error) {
+            console.error('Error uploading:', error);
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                console.error('Response data:', error.response.data);
+                console.error('Response status:', error.response.status);
+                console.error('Response headers:', error.response.headers);
+            } else if (error.request) {
+                // The request was made but no response was received
+                console.error('Request data:', error.request);
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                console.error('Error message:', error.message);
+            }
+        }
+    };
+
+
     const handleButtonPress = () => {
       if (isMoving) {
         setIsMoving(false);
@@ -93,13 +178,48 @@ const EyeTracking = ({navigation}) => {
       outputRange: [160, 160, 0, 0, 320, 320, 160, 160], // Adjust the starting and ending positions
     });
     
+    const video = React.useRef(null);
+    const [status, setStatus] = React.useState({});
 
     return(
         <TamaguiProvider config={config}>
         <View style={styles.container}>
             <Text style={styles.headerText}>Try to follow the dot as it moves around the screen</Text>
             
-            <View width="100%" height="100%" flex={1} borderColor={"gray"} borderWidth={1}>
+
+            <View style={styles.cameraContainer}>
+                <Camera 
+                ref={ref => setCamera(ref)}
+                style={styles.fixedRatio} 
+                type={type}
+                ratio={'4:3'} />
+            </View>
+
+            <Btn title="Take video" onPress={() => takeVideo()} />
+            <Btn title="Stop Video" onPress={() => stopVideo()} />
+
+
+            <Video
+            ref={video}
+            style={styles.video}
+            source={{
+                uri: record,
+            }}
+            useNativeControls
+            resizeMode="contain"
+            isLooping
+            onPlaybackStatusUpdate={status => setStatus(() => status)}
+            />
+            <View style={styles.buttons}>
+            <Btn
+                title={status.isPlaying ? 'Pause' : 'Play'}
+                onPress={() =>
+                status.isPlaying ? video.current.pauseAsync() : video.current.playAsync()
+                }
+            />
+            </View>
+
+            {/* <View width="100%" height="100%" flex={1} borderColor={"gray"} borderWidth={1}>
             <Animated.View
                 style={{
                 position: 'absolute',
@@ -112,10 +232,10 @@ const EyeTracking = ({navigation}) => {
                 style={{ width: 70, height: 70 }}
                 />
             </Animated.View>
-            </View>
+            </View> */}
 
 
-
+{/* 
             <View style={{alignItems: 'center', justifyContent: 'center', height: 140}}>
                 <Button size="$6" onPress={handleButtonPress}
                         textAlign='center'
@@ -137,7 +257,7 @@ const EyeTracking = ({navigation}) => {
                 >
                     Continue
                 </Button>
-            </View>
+            </View> */}
 
         </View>
       </TamaguiProvider>
@@ -162,6 +282,24 @@ const styles = StyleSheet.create({
         fontSize: 20,
         marginTop: 70,
       },
+      cameraContainer: {
+        flex: 1,
+        flexDirection: 'row'
+    },
+    fixedRatio:{
+        flex: 1,
+        aspectRatio: 1
+    },
+    video: {
+      alignSelf: 'center',
+      width: 350,
+      height: 220,
+    },
+    buttons: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
 });
 
 export default EyeTracking;
