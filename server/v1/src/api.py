@@ -1,13 +1,17 @@
 from typing import Dict, Any, Optional, List
 
-from fastapi import FastAPI, Query, Form, HTTPException
+from fastapi import FastAPI, Query, Form, HTTPException, UploadFile, File
 from fastapi_socketio import SocketManager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+import shutil
+from pathlib import Path
+from pydub import AudioSegment
 
 from v1.src.util.responsemodel import ResponseModel
 from v1.src.modules.persistence import Persistence
 from v1.src.modules.session_handler import SessionHandler
+from v1.src.modules.openai_module import OpenAIModule
 
 app: FastAPI = FastAPI()
 
@@ -54,3 +58,32 @@ async def create_session(user_id: str = Query()):
 
 if __name__ == "__main__":
     Persistence.initialize()
+
+@app.post("/upload_audio/")
+async def upload_audio(file: UploadFile = File(...)):
+    # Ensure the upload directory exists
+    UPLOAD_DIRECTORY = Path(__file__).parent / "uploads"
+    UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
+    # Save the uploaded file
+    temp_path = UPLOAD_DIRECTORY / file.filename
+    with temp_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    mp3_path = UPLOAD_DIRECTORY / "audio.mp3"
+
+    AudioSegment.from_file(str(temp_path)).export(str(mp3_path), format="mp3")
+
+    # Transcribe using Whisper
+    with open(mp3_path, "rb") as f:
+        response = await OpenAIModule.whisper_transcription(f)
+        transcription = response['text']
+
+    # Clean up (Optional: remove temporary files)
+    Path(temp_path).unlink()
+    Path(mp3_path).unlink()
+
+    return ResponseModel(
+        success=True,
+        message={"transcription": transcription}
+    )
