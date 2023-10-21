@@ -80,3 +80,29 @@ async def upload_audio(file: UploadFile = File(...)):
         success=True,
         message={"transcription": transcription}
     )
+
+
+@app.post("/upload_video/")
+async def upload_video(file: UploadFile = File(...)):
+    print('ghj')
+    # Ensure the upload directory exists
+    UPLOAD_DIRECTORY = Path(__file__).parent / "uploads"
+    UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
+    # Save the uploaded file
+    temp_path = UPLOAD_DIRECTORY / file.filename
+    with temp_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    mp3_path = UPLOAD_DIRECTORY / "video.mov"
+
+    AudioSegment.from_file(str(temp_path)).export(str(mp3_path), format="mov")
+
+    # Clean up (Optional: remove temporary files)
+    Path(temp_path).unlink()
+    Path(mp3_path).unlink()
+
+    return ResponseModel(
+        success=True,
+        message={}
+    )
