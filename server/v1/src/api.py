@@ -56,9 +56,6 @@ async def get_user(user_id: str = Query()):
 async def create_session(user_id: str = Query()):
     return StreamingResponse(SessionHandler.create_session(user_id=user_id))
 
-if __name__ == "__main__":
-    Persistence.initialize()
-
 @app.post("/upload_audio/")
 async def upload_audio(file: UploadFile = File(...)):
     # Ensure the upload directory exists
@@ -87,3 +84,6 @@ async def upload_audio(file: UploadFile = File(...)):
         success=True,
         message={"transcription": transcription}
     )
+
+if __name__ == "__main__":
+    Persistence.initialize()
