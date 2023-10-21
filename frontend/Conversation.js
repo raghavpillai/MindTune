@@ -136,6 +136,7 @@ const Conversation = () => {
 
 
 
+
     return(
         <TamaguiProvider config={config}>
         <View style={styles.container}>
@@ -157,6 +158,7 @@ const Conversation = () => {
                 />
                 </TouchableOpacity>
             </Animated.View>
+            <Text style={styles.bottomText}>How's your day going?</Text>
         </View>
       </TamaguiProvider>
     )
@@ -174,8 +176,13 @@ const styles = StyleSheet.create({
       },
       headerText: {
         fontSize: 30,
-        marginVertical: 50,
+        marginTop: 50,
+        paddingBottom: 100,
         fontWeight: 'bold',
+      },
+      bottomText: {
+        fontSize: 20,
+        marginTop: 70,
       },
       microphoneContainer: {
         marginTop: 20,

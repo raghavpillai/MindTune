@@ -8,6 +8,7 @@ import { Button, XStack, Image } from "tamagui";
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Conversation from "./Conversation";
+import EyeTracking from "./EyeTracking";
 
 
 const Home = ({navigation}) => {
@@ -106,6 +107,7 @@ const Home = ({navigation}) => {
                 fontSize={21}
                 backgroundColor={"white"}
                 color={"$blue9"}
+                onPress={() => navigation.navigate('EyeTracking')}
               >
                 See Your Progress
               </Button>
@@ -129,6 +131,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="Home">
         <Stack.Screen name="Home" component={Home} options={{ headerTitle: (props) => <></> }}/>
         <Stack.Screen name="Conversation" component={Conversation} options={{ headerTitle: (props) => <></> }}/>
+        <Stack.Screen name="EyeTracking" component={EyeTracking} options={{headerTitle: (props) => <></>}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
