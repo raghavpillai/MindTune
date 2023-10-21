@@ -4,9 +4,14 @@ import React, { useEffect, useRef } from "react";
 import { StyleSheet, View, ImageBackground, Animated } from "react-native";
 import { TamaguiProvider } from "tamagui";
 import config from "./tamagui.config";
-import { Button, XStack, Image } from "tamagui";
+import { Button, XStack, Image } from "tamagui";  
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Conversation from "./Conversation";
 
-export default function App() {
+
+const Home = () => {
+
   const buttonsTranslateY = useRef(new Animated.Value(300)).current;
   const backgroundTranslateY = useRef(new Animated.Value(500)).current;
   const logoTranslateY = useRef(new Animated.Value(-300)).current;
@@ -46,71 +51,85 @@ export default function App() {
     return null;
   }
 
-  return (
+  return(
     <TamaguiProvider config={config}>
-      <View style={styles.container}>
-        <Animated.View
-          style={{
-            ...styles.backgroundImageContainer,
-            transform: [{ translateY: backgroundTranslateY }],
-          }}
+    <View style={styles.container}>
+      <Animated.View
+        style={{
+          ...styles.backgroundImageContainer,
+          transform: [{ translateY: backgroundTranslateY }],
+        }}
+      >
+        <ImageBackground
+          source={require("./assets/backdrop.png")}
+          resizeMode="cover"
+          style={styles.backgroundImage}
         >
-          <ImageBackground
-            source={require("./assets/backdrop.png")}
-            resizeMode="cover"
-            style={styles.backgroundImage}
+          <Animated.View
+            style={{
+              ...styles.logoContainer,
+              transform: [{ translateY: logoTranslateY }],
+            }}
           >
-            <Animated.View
+            <Image
               style={{
-                ...styles.logoContainer,
-                transform: [{ translateY: logoTranslateY }],
+                resizeMode: "cover",
+                height: 100,
+                width: 350,
               }}
-            >
-              <Image
-                style={{
-                  resizeMode: "cover",
-                  height: 100,
-                  width: 350,
-                }}
-                source={require("./assets/logo.png")}
-              />
-            </Animated.View>
+              source={require("./assets/logo.png")}
+            />
+          </Animated.View>
 
-            <Animated.View
-              style={{
-                ...styles.buttonContainer,
-                transform: [{ translateY: buttonsTranslateY }],
-              }}
-            >
-              <XStack style={styles.buttonSpacing}>
-                <Button
-                  width="75%"
-                  height={60}
-                  fontSize={21}
-                  backgroundColor={"white"}
-                  color={"$blue9"}
-                >
-                  Check In
-                </Button>
-              </XStack>
-              <XStack>
-                <Button
-                  width="75%"
-                  height={60}
-                  fontSize={21}
-                  backgroundColor={"white"}
-                  color={"$blue9"}
-                >
-                  See Your Progress
-                </Button>
-              </XStack>
-            </Animated.View>
-          </ImageBackground>
-        </Animated.View>
+          <Animated.View
+            style={{
+              ...styles.buttonContainer,
+              transform: [{ translateY: buttonsTranslateY }],
+            }}
+          >
+            <XStack style={styles.buttonSpacing}>
+              <Button
+                width="75%"
+                height={60}
+                fontSize={21}
+                backgroundColor={"white"}
+                color={"$blue9"}
+              >
+                Check In
+              </Button>
+            </XStack>
+            <XStack>
+              <Button
+                width="75%"
+                height={60}
+                fontSize={21}
+                backgroundColor={"white"}
+                color={"$blue9"}
+              >
+                See Your Progress
+              </Button>
+            </XStack>
+          </Animated.View>
+        </ImageBackground>
+      </Animated.View>
 
-        <StatusBar style="auto" />
-      </View>
-    </TamaguiProvider>
+      <StatusBar style="auto" />
+    </View>
+  </TamaguiProvider>
+  )
+}
+
+
+const Stack = createNativeStackNavigator();
+export default function App() {
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={Home} options={{ headerTitle: (props) => <></> }}/>
+        <Stack.Screen name="Conversation" component={Conversation} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
