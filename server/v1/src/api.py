@@ -6,7 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from v1.src.util.responsemodel import ResponseModel
-from v1.src.modules.openai_module import OpenaiModule
+from v1.src.modules.openai_module import OpenAIModule
+from v1.src.modules.persistence import Persistence
 
 app: FastAPI = FastAPI()
 
@@ -31,12 +32,19 @@ async def default():
     return ResponseModel(success=True, message={"hi": "test"})
 
 @app.get(f"{API_V1_ENDPOINT}/", response_model=ResponseModel)
-async def main():
-    return ResponseModel(success=True, message={"hi": "test2"})
+async def test():
+    return ResponseModel(success=True, message={"test": "passed"})
 
-@app.get(f"{OPENAI_V1_ENDPOINT}/")
-async def main(messages: list[Dict]):
+@app.get(f"{API_V1_ENDPOINT}/users/get_all_data")
+async def get_all():
     return ResponseModel(
         success=True,
-        message=OpenaiModule.get_completion(messages)
+        message={"user_data": Persistence.get_all_users()}
+    )
+
+@app.get(f"{API_V1_ENDPOINT}/users/get_user")
+async def get_user(user_id: str = Query()):
+    return ResponseModel(
+        success=True,
+        message={"user_data": Persistence.get_user(user_id=user_id)}
     )
