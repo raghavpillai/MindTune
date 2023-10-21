@@ -33,7 +33,6 @@ class Persistence:
 
     @classmethod
     def get_all_users(cls) -> List[Dict[str, Union[str, int, List[Dict[str, Union[str, int]]]]]]:
-        cls.initialize()
         conn = sqlite3.connect(DATABASE_PATH)
         c = conn.cursor()
 
@@ -59,6 +58,7 @@ class Persistence:
 
         user_id, first_name, last_name, age, city, phone, score = user
         user_dict = {
+            'user_id': user_id,
             'first_name': first_name,
             'last_name': last_name,
             'age': age,
