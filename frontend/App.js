@@ -10,7 +10,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Conversation from "./Conversation";
 
 
-const Home = () => {
+const Home = ({navigation}) => {
 
   const buttonsTranslateY = useRef(new Animated.Value(300)).current;
   const backgroundTranslateY = useRef(new Animated.Value(500)).current;
@@ -94,6 +94,7 @@ const Home = () => {
                 fontSize={21}
                 backgroundColor={"white"}
                 color={"$blue9"}
+                onPress={() => navigation.navigate('Conversation')}
               >
                 Check In
               </Button>
@@ -127,7 +128,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
         <Stack.Screen name="Home" component={Home} options={{ headerTitle: (props) => <></> }}/>
-        <Stack.Screen name="Conversation" component={Conversation} />
+        <Stack.Screen name="Conversation" component={Conversation} options={{ headerTitle: (props) => <></> }}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
