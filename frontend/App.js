@@ -9,7 +9,9 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Conversation from "./Conversation";
 
-const Home = () => {
+
+const Home = ({navigation}) => {
+
   const buttonsTranslateY = useRef(new Animated.Value(300)).current;
   const backgroundTranslateY = useRef(new Animated.Value(500)).current;
   const logoTranslateY = useRef(new Animated.Value(-300)).current;
@@ -40,6 +42,7 @@ const Home = () => {
         useNativeDriver: true,
       }),
     ]).start();
+    navigation.navigate('Conversation');
   };
 
   useEffect(() => {
@@ -102,56 +105,52 @@ const Home = () => {
               />
             </Animated.View>
 
-            <Animated.View
-              style={{
-                ...styles.buttonContainer,
-                transform: [{ translateY: buttonsTranslateY }],
-              }}
-            >
-              <XStack style={styles.buttonSpacing}>
-                <Button
-                  width="75%"
-                  height={60}
-                  fontSize={21}
-                  backgroundColor={"white"}
-                  color={"$blue9"}
-                  onPress={startCheckInAnimations}
-                >
-                  Check In
-                </Button>
-              </XStack>
-              <XStack>
-                <Button
-                  width="75%"
-                  height={60}
-                  fontSize={21}
-                  backgroundColor={"white"}
-                  color={"$blue9"}
-                >
-                  See Your Progress
-                </Button>
-              </XStack>
-            </Animated.View>
-          </ImageBackground>
-        </Animated.View>
+          <Animated.View
+            style={{
+              ...styles.buttonContainer,
+              transform: [{ translateY: buttonsTranslateY }],
+            }}
+          >
+            <XStack style={styles.buttonSpacing}>
+              <Button
+                width="75%"
+                height={60}
+                fontSize={21}
+                backgroundColor={"white"}
+                color={"$blue9"}
+                onPress={() => startCheckInAnimations()}
+              >
+                Check In
+              </Button>
+            </XStack>
+            <XStack>
+              <Button
+                width="75%"
+                height={60}
+                fontSize={21}
+                backgroundColor={"white"}
+                color={"$blue9"}
+              >
+                See Your Progress
+              </Button>
+            </XStack>
+          </Animated.View>
+        </ImageBackground>
+      </Animated.View>
 
-        <StatusBar style="auto" />
-      </View>
-    </TamaguiProvider>
-  );
-};
+      <StatusBar style="auto" />
+    </View>
+  </TamaguiProvider>
+  )
+}
 
 const Stack = createNativeStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen
-          name="Home"
-          component={Home}
-          options={{ headerTitle: (props) => <></> }}
-        />
-        <Stack.Screen name="Conversation" component={Conversation} />
+        <Stack.Screen name="Home" component={Home} options={{ headerTitle: (props) => <></> }}/>
+        <Stack.Screen name="Conversation" component={Conversation} options={{ headerTitle: (props) => <></> }}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
