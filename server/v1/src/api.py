@@ -40,7 +40,3 @@ async def main(messages: list[Dict]):
         success=True,
         message=OpenaiModule.get_completion(messages)
     )
-@app.get("/getfollowupquestions", response_model=ResponseModel)
-async def get_followup_questions():
-    
-    
