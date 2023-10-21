@@ -6,10 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from v1.src.util.responsemodel import ResponseModel
+from v1.src.modules.openai_module import OpenaiModule
 
 app: FastAPI = FastAPI()
 
 API_V1_ENDPOINT = "/api/v1"
+OPENAI_V1_ENDPOINT = "/openai/v1"
 
 # Set up CORS
 origins = ["*"]
@@ -31,3 +33,10 @@ async def default():
 @app.get(f"{API_V1_ENDPOINT}/", response_model=ResponseModel)
 async def main():
     return ResponseModel(success=True, message={"hi": "test2"})
+
+@app.get(f"{OPENAI_V1_ENDPOINT}/")
+async def main(messages: list[Dict]):
+    return ResponseModel(
+        success=True,
+        message=OpenaiModule.get_completion(messages)
+    )
