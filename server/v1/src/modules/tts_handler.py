@@ -24,7 +24,7 @@ class TTSHandler:
             yield item
 
     @classmethod
-    async def generate_audio_async(cls, text_stream_fn: Callable[[str], AsyncGenerator], query: str) -> None:
+    async def generate_audio_async(cls, text_stream_fn: Callable[[str], AsyncGenerator], done_event: threading.Event = None) -> None:
         speak_queue: queue.Queue = queue.Queue()
 
         def tts_thread_fn():
@@ -35,11 +35,13 @@ class TTSHandler:
                 stream=True
             )
             stream(audio_stream)
-        
+            if done_event:
+                done_event.set()
+
         threading.Thread(target=tts_thread_fn).start()
 
         sentence_buffer = ""
-        async for text in text_stream_fn(query):
+        async for text in text_stream_fn:
             sentence_buffer += text
 
             while re.search(r'[.!?]', sentence_buffer):
