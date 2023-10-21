@@ -4,6 +4,8 @@ import { TamaguiProvider } from 'tamagui'
 import config from './tamagui.config'
 import { Button, XStack, YStack, Image} from 'tamagui'
 import logo from './assets/logo.png'
+import { useEffect } from 'react';
+import {NativeRouter, Switch, Route} from "react-router-native";
 
 export default function App() {
   return (
