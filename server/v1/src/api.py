@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional, List
 
-from fastapi import FastAPI, Query, Form, HTTPException, UploadFile, File
+from fastapi import FastAPI, Query, UploadFile, File
 from fastapi_socketio import SocketManager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -16,6 +16,8 @@ from v1.src.modules.openai_module import OpenAIModule
 app: FastAPI = FastAPI()
 
 API_V1_ENDPOINT = "/api/v1"
+UPLOAD_DIRECTORY = Path(__file__).parent / "uploads"
+UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
 # Set up CORS
 origins = ["*"]
@@ -58,11 +60,6 @@ async def create_session(user_id: str = Query()):
 
 @app.post("/upload_audio/")
 async def upload_audio(file: UploadFile = File(...)):
-    # Ensure the upload directory exists
-    UPLOAD_DIRECTORY = Path(__file__).parent / "uploads"
-    UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
-
-    # Save the uploaded file
     temp_path = UPLOAD_DIRECTORY / file.filename
     with temp_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -71,12 +68,10 @@ async def upload_audio(file: UploadFile = File(...)):
 
     AudioSegment.from_file(str(temp_path)).export(str(mp3_path), format="mp3")
 
-    # Transcribe using Whisper
     with open(mp3_path, "rb") as f:
         response = await OpenAIModule.whisper_transcription(f)
         transcription = response['text']
 
-    # Clean up (Optional: remove temporary files)
     Path(temp_path).unlink()
     Path(mp3_path).unlink()
 
