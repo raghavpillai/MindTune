@@ -1,4 +1,5 @@
 import { StatusBar } from "expo-status-bar";
+import { useFonts } from "expo-font";
 import React, { useEffect, useRef } from "react";
 import { StyleSheet, View, ImageBackground, Animated } from "react-native";
 import { TamaguiProvider } from "tamagui";
@@ -10,41 +11,60 @@ export default function App() {
   const backgroundTranslateY = useRef(new Animated.Value(500)).current;
   const logoTranslateY = useRef(new Animated.Value(-300)).current;
 
+  const [loaded] = useFonts({
+    Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
+    InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
+  });
+
   useEffect(() => {
-    Animated.sequence([
-      // First, execute these two animations in parallel.
-      Animated.parallel([
-        Animated.timing(logoTranslateY, {
+    if (loaded) {
+      Animated.sequence([
+        // First, execute these two animations in parallel.
+        Animated.parallel([
+          Animated.timing(logoTranslateY, {
+            toValue: 0,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(backgroundTranslateY, {
+            toValue: 0,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+        ]),
+        // Once the parallel animations are done, execute this one.
+        Animated.timing(buttonsTranslateY, {
           toValue: 0,
-          duration: 2000,
+          duration: 500,
           useNativeDriver: true,
         }),
-        Animated.timing(backgroundTranslateY, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ]),
-      // Once the parallel animations are done, execute this one.
-      Animated.timing(buttonsTranslateY, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+      ]).start();
+    }
+  }, [loaded]);
+
+  if (!loaded) {
+    return null;
+  }
 
   return (
     <TamaguiProvider config={config}>
       <View style={styles.container}>
-        <Animated.View style={{ ...styles.backgroundImageContainer, transform: [{ translateY: backgroundTranslateY }] }}>
+        <Animated.View
+          style={{
+            ...styles.backgroundImageContainer,
+            transform: [{ translateY: backgroundTranslateY }],
+          }}
+        >
           <ImageBackground
             source={require("./assets/backdrop.png")}
             resizeMode="cover"
             style={styles.backgroundImage}
           >
             <Animated.View
-              style={{ ...styles.logoContainer, transform: [{ translateY: logoTranslateY }] }}
+              style={{
+                ...styles.logoContainer,
+                transform: [{ translateY: logoTranslateY }],
+              }}
             >
               <Image
                 style={{
@@ -56,14 +76,31 @@ export default function App() {
               />
             </Animated.View>
 
-            <Animated.View style={{ ...styles.buttonContainer, transform: [{ translateY: buttonsTranslateY }] }}>
+            <Animated.View
+              style={{
+                ...styles.buttonContainer,
+                transform: [{ translateY: buttonsTranslateY }],
+              }}
+            >
               <XStack style={styles.buttonSpacing}>
-                <Button width="75%" height={60} fontSize={20} backgroundColor={"white"} color={"$blue9"}>
+                <Button
+                  width="75%"
+                  height={60}
+                  fontSize={21}
+                  backgroundColor={"white"}
+                  color={"$blue9"}
+                >
                   Check In
                 </Button>
               </XStack>
               <XStack>
-                <Button width="75%" height={60} fontSize={20} backgroundColor={"white"} color={"$blue9"}>
+                <Button
+                  width="75%"
+                  height={60}
+                  fontSize={21}
+                  backgroundColor={"white"}
+                  color={"$blue9"}
+                >
                   See Your Progress
                 </Button>
               </XStack>
