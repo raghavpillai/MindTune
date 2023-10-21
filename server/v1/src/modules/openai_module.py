@@ -49,6 +49,11 @@ class OpenAIModule:
         
         if assistant_response:
             cls.messages.append({"role": "assistant", "content": assistant_response})
+
+    @classmethod
+    async def whisper_transcription(cls, audio_file) -> Dict:
+        response = openai.Audio.transcribe("whisper-1", audio_file)
+        return response
     
 
 if __name__ == "__main__":
