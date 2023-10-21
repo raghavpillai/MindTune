@@ -11,7 +11,7 @@ from pydub import AudioSegment
 from v1.src.util.responsemodel import ResponseModel
 from v1.src.modules.persistence import Persistence
 from v1.src.modules.session_handler import SessionHandler
-from v1.src.modules.openai_module import OpenAIModule
+from v1.src.modules.transcriptions import Transcriptions
 
 app: FastAPI = FastAPI()
 
@@ -69,7 +69,7 @@ async def upload_audio(file: UploadFile = File(...)):
     AudioSegment.from_file(str(temp_path)).export(str(mp3_path), format="mp3")
 
     with open(mp3_path, "rb") as f:
-        response = await OpenAIModule.whisper_transcription(f)
+        response = await Transcriptions.whisper_transcription(f)
         transcription = response['text']
 
     Path(temp_path).unlink()
