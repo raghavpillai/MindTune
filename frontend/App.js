@@ -4,14 +4,12 @@ import React, { useEffect, useRef } from "react";
 import { StyleSheet, View, ImageBackground, Animated } from "react-native";
 import { TamaguiProvider } from "tamagui";
 import config from "./tamagui.config";
-import { Button, XStack, Image } from "tamagui";  
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Button, XStack, Image } from "tamagui";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Conversation from "./Conversation";
 
-
 const Home = () => {
-
   const buttonsTranslateY = useRef(new Animated.Value(300)).current;
   const backgroundTranslateY = useRef(new Animated.Value(500)).current;
   const logoTranslateY = useRef(new Animated.Value(-300)).current;
@@ -20,6 +18,29 @@ const Home = () => {
     Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
     InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
   });
+
+  const startCheckInAnimations = () => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(logoTranslateY, {
+          toValue: -300,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonsTranslateY, {
+          toValue: 2000,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+
+      Animated.timing(backgroundTranslateY, {
+        toValue: -800,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   useEffect(() => {
     if (loaded) {
@@ -40,7 +61,7 @@ const Home = () => {
         // Once the parallel animations are done, execute this one.
         Animated.timing(buttonsTranslateY, {
           toValue: 0,
-          duration: 500,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ]).start();
@@ -51,82 +72,85 @@ const Home = () => {
     return null;
   }
 
-  return(
+  return (
     <TamaguiProvider config={config}>
-    <View style={styles.container}>
-      <Animated.View
-        style={{
-          ...styles.backgroundImageContainer,
-          transform: [{ translateY: backgroundTranslateY }],
-        }}
-      >
-        <ImageBackground
-          source={require("./assets/backdrop.png")}
-          resizeMode="cover"
-          style={styles.backgroundImage}
+      <View style={styles.container}>
+        <Animated.View
+          style={{
+            ...styles.backgroundImageContainer,
+            transform: [{ translateY: backgroundTranslateY }],
+          }}
         >
-          <Animated.View
-            style={{
-              ...styles.logoContainer,
-              transform: [{ translateY: logoTranslateY }],
-            }}
+          <ImageBackground
+            source={require("./assets/backdrop.png")}
+            resizeMode="cover"
+            style={styles.backgroundImage}
           >
-            <Image
+            <Animated.View
               style={{
-                resizeMode: "cover",
-                height: 100,
-                width: 350,
+                ...styles.logoContainer,
+                transform: [{ translateY: logoTranslateY }],
               }}
-              source={require("./assets/logo.png")}
-            />
-          </Animated.View>
+            >
+              <Image
+                style={{
+                  resizeMode: "cover",
+                  height: 100,
+                  width: 350,
+                }}
+                source={require("./assets/logo.png")}
+              />
+            </Animated.View>
 
-          <Animated.View
-            style={{
-              ...styles.buttonContainer,
-              transform: [{ translateY: buttonsTranslateY }],
-            }}
-          >
-            <XStack style={styles.buttonSpacing}>
-              <Button
-                width="75%"
-                height={60}
-                fontSize={21}
-                backgroundColor={"white"}
-                color={"$blue9"}
-              >
-                Check In
-              </Button>
-            </XStack>
-            <XStack>
-              <Button
-                width="75%"
-                height={60}
-                fontSize={21}
-                backgroundColor={"white"}
-                color={"$blue9"}
-              >
-                See Your Progress
-              </Button>
-            </XStack>
-          </Animated.View>
-        </ImageBackground>
-      </Animated.View>
+            <Animated.View
+              style={{
+                ...styles.buttonContainer,
+                transform: [{ translateY: buttonsTranslateY }],
+              }}
+            >
+              <XStack style={styles.buttonSpacing}>
+                <Button
+                  width="75%"
+                  height={60}
+                  fontSize={21}
+                  backgroundColor={"white"}
+                  color={"$blue9"}
+                  onPress={startCheckInAnimations}
+                >
+                  Check In
+                </Button>
+              </XStack>
+              <XStack>
+                <Button
+                  width="75%"
+                  height={60}
+                  fontSize={21}
+                  backgroundColor={"white"}
+                  color={"$blue9"}
+                >
+                  See Your Progress
+                </Button>
+              </XStack>
+            </Animated.View>
+          </ImageBackground>
+        </Animated.View>
 
-      <StatusBar style="auto" />
-    </View>
-  </TamaguiProvider>
-  )
-}
-
+        <StatusBar style="auto" />
+      </View>
+    </TamaguiProvider>
+  );
+};
 
 const Stack = createNativeStackNavigator();
 export default function App() {
-
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={Home} options={{ headerTitle: (props) => <></> }}/>
+        <Stack.Screen
+          name="Home"
+          component={Home}
+          options={{ headerTitle: (props) => <></> }}
+        />
         <Stack.Screen name="Conversation" component={Conversation} />
       </Stack.Navigator>
     </NavigationContainer>
