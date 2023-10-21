@@ -1,10 +1,8 @@
 import os
 import re
-import queue
 import threading
-
 from dotenv import load_dotenv
-from elevenlabs import generate, stream, set_api_key
+from elevenlabs import generate, set_api_key, play, stream
 from typing import Callable, AsyncGenerator, List
 
 load_dotenv()
@@ -13,56 +11,73 @@ set_api_key(os.getenv("ELEVENLABS_API_KEY"))
 WORDS_PER_CHUNK = 3
 
 class TTSHandler:
-
-    @staticmethod
-    def _sync_stream(speak_queue: queue.Queue) -> str:
+    @classmethod
+    def _sync_stream(cls, speak_queue: list, condition: threading.Condition) -> str:
         while True:
-            item = speak_queue.get()
+            with condition:
+                while not speak_queue:  # wait until there's an item
+                    condition.wait()
+                item = speak_queue.pop(0)
             if item is None:
                 break
-            print(item)
             yield item
 
     @classmethod
     async def generate_audio_async(cls, text_stream_fn: Callable[[str], AsyncGenerator], done_event: threading.Event = None) -> None:
-        speak_queue: queue.Queue = queue.Queue()
+        speak_queue = []
+        audio_queue = []
+        condition = threading.Condition()
 
         def tts_thread_fn():
             audio_stream = generate(
-                text=cls._sync_stream(speak_queue),
+                text=cls._sync_stream(speak_queue, condition),
                 voice="Nicole",
                 model="eleven_monolingual_v1",
                 stream=True
             )
-            stream(audio_stream)
-            if done_event:
-                done_event.set()
+
+            for chunk in audio_stream:
+                with condition:
+                    audio_queue.append(chunk)
+                    condition.notify()
+                
+            with condition:
+                audio_queue.append(None) 
+                condition.notify()
 
         threading.Thread(target=tts_thread_fn).start()
 
         sentence_buffer = ""
+        full_text = ""
         async for text in text_stream_fn:
             sentence_buffer += text
-
+            full_text += text
             while re.search(r'[.!?]', sentence_buffer):
                 sentence, _, remainder = re.split(r'([.!?])', sentence_buffer, 1)
                 sentence += _
-
-                speak_queue.put(sentence.strip())
+                with condition:
+                    speak_queue.append(sentence.strip())
+                    condition.notify()
                 sentence_buffer = remainder
 
         if sentence_buffer.strip():
-            speak_queue.put(sentence_buffer.strip())
+            with condition:
+                speak_queue.append(sentence_buffer.strip())
+                condition.notify()
 
-        # words_buffer: List[str] = []
-        # async for text in text_stream_fn(query):
-        #     words_buffer.extend(text.split())
+        with condition:
+            speak_queue.append(None)  # Signal end of text
+            condition.notify()
 
-        #     while len(words_buffer) >= WORDS_PER_CHUNK:
-        #         speak_queue.put(' '.join(words_buffer[:WORDS_PER_CHUNK]))
-        #         words_buffer = words_buffer[WORDS_PER_CHUNK:]
-
-        # if words_buffer:
-        #     speak_queue.put(' '.join(words_buffer))
+        yield {'text': full_text}
+        while True:  # Yield audio chunks
+            with condition:
+                while not audio_queue: # wait until there's an item
+                    condition.wait()
+                audio_chunk = audio_queue.pop(0)
+            if audio_chunk is None:  # Check for sentinel value
+                if done_event:
+                    done_event.set()
+                break
+            yield {'chunk': audio_chunk}
             
-        speak_queue.put(None) # End here

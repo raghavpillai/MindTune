@@ -3,16 +3,15 @@ from typing import Dict, Any, Optional, List
 from fastapi import FastAPI, Query, Form, HTTPException
 from fastapi_socketio import SocketManager
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import StreamingResponse
 
 from v1.src.util.responsemodel import ResponseModel
-from v1.src.modules.openai_module import OpenAIModule
 from v1.src.modules.persistence import Persistence
+from v1.src.modules.session_handler import SessionHandler
 
 app: FastAPI = FastAPI()
 
 API_V1_ENDPOINT = "/api/v1"
-OPENAI_V1_ENDPOINT = "/openai/v1"
 
 # Set up CORS
 origins = ["*"]
@@ -48,3 +47,10 @@ async def get_user(user_id: str = Query()):
         success=True,
         message={"user_data": Persistence.get_user(user_id=user_id)}
     )
+
+@app.get(f"{API_V1_ENDPOINT}/chat/create_session")
+async def create_session(user_id: str = Query()):
+    return StreamingResponse(SessionHandler.create_session(user_id=user_id))
+
+if __name__ == "__main__":
+    Persistence.initialize()
