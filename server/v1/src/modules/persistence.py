@@ -3,7 +3,7 @@ import os
 import random
 from typing import List, Dict, Union
 
-DATABASE_PATH = "../data/database.db"
+DATABASE_PATH = os.path.join(os.path.dirname(__file__), "../data/persistence.db")
 
 class Persistence:
 
@@ -33,6 +33,7 @@ class Persistence:
 
     @classmethod
     def get_all_users(cls) -> List[Dict[str, Union[str, int, List[Dict[str, Union[str, int]]]]]]:
+        cls.initialize()
         conn = sqlite3.connect(DATABASE_PATH)
         c = conn.cursor()
 
