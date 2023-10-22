@@ -68,11 +68,15 @@ async def chatbot(sid, data: Dict[str, Any]):
     command: str = data.get("command")
     
     if command == "create_session":
-        async for result in SessionHandler.create_session(user_id=user_id):
+        async for result in SessionHandler.create_session(user_id=  user_id):
             await sio.emit("chatbot", result, room=sid)
     elif command == "get_response":
         query: str = data.get("query")
         async for result in SessionHandler.get_chatbot_response(user_id=user_id, query=query):
+            await sio.emit("chatbot", result, room=sid)
+    elif command == "speech_from_text":
+        text: str = data.get("text")
+        async for result in SessionHandler.get_speech_from_text(text=text):
             await sio.emit("chatbot", result, room=sid)
 
 @app.get(f"{API_V1_ENDPOINT}/chat/create_session")
