@@ -54,11 +54,15 @@ async def get_user(user_id: str = Query()):
         message={"user_data": Persistence.get_user(user_id=user_id)}
     )
 
-@app.get(f"{API_V1_ENDPOINT}/chat/create_session")
+@app.post(f"{API_V1_ENDPOINT}/chat/create_session")
 async def create_session(user_id: str = Query()):
     return StreamingResponse(SessionHandler.create_session(user_id=user_id))
 
-@app.post("/upload_audio/")
+@app.get(f"{API_V1_ENDPOINT}/chat/get_response")
+async def get_response(user_id: str = Query(), query: str = Query()):
+    return StreamingResponse(SessionHandler.get_chatbot_response(user_id=user_id, query=query))
+
+@app.post(f"{API_V1_ENDPOINT}/upload_audio/")
 async def upload_audio(file: UploadFile = File(...)):
     temp_path = UPLOAD_DIRECTORY / file.filename
     with temp_path.open("wb") as buffer:

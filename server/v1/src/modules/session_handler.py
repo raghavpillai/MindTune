@@ -11,7 +11,7 @@ class SessionHandler:
     chatbot_sessions: Dict[str, Chatbot] = {}
 
     @classmethod
-    async def get_chatbot_response(cls, user_id: str, query: str, done_event: asyncio.Event) -> AsyncGenerator[Any, Any]:
+    async def get_chatbot_response(cls, user_id: str, query: str, done_event: asyncio.Event=asyncio.Event()) -> AsyncGenerator[Any, Any]:
         if user_id not in cls.chatbot_sessions:
             yield "User not found"
             return
