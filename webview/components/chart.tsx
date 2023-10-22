@@ -74,7 +74,7 @@ export default function NewChart({ scoreHistory }: NewChartProps) {
   const xAxisData = reversedScoreHistory.map(sh => sh.date.split('-').slice(1).join('-'));
 
   return (
-    <div id="chart">
+    <div id="chart" style={{ width: '100%' }}>
       <Chart options={{ ...options, xaxis: { ...options.xaxis, categories: xAxisData } }} series={seriesData} type="area" height={425} />
     </div>
   );

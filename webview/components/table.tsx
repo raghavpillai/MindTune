@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableHeader,
@@ -16,6 +16,8 @@ import {
   ModalContent,
   useDisclosure,
   ModalHeader,
+  Divider,
+  Card,
 } from "@nextui-org/react";
 import NewChart from "@/components/chart";
 
@@ -117,19 +119,46 @@ export default function App() {
         console.error('Failed to fetch data:', error);
       }
     };
+
     fetchData();
   }, []);
+
+  const [videoSrc, setVideoSrc] = useState('');
+
+  const fetchVideo = async (name: string) => {
+    try {
+      const response = await fetch(`https://shreyj1729--mind-tune-dir-gaze-video-dev.modal.run/?user_id=${name}`);     
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      setVideoSrc(blobUrl);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    }
+  };
 
   const renderCell = (item: Row, columnKey: keyof Row) => {
     const cellValue = getKeyValue(item, columnKey);
 
     if (columnKey === "score") {
+      let bgColorClass;
+      // Determine the background color class based on the score range
+      if (cellValue < 80) {
+        bgColorClass = 'bg-red-500'; // Red for low scores
+      } else if (cellValue < 90) {
+        bgColorClass = 'bg-yellow-500'; // Yellow for medium scores
+      } else {
+        bgColorClass = 'bg-green-500'; // Green for high scores
+      }
       return (
         <>
           <Button onPress={() => {
               setCurrentItem(item); // Update the currentItem
+              fetchVideo(item.user_id);
               onOpen();
-            }}>{cellValue}</Button>
+            }}
+            className={`text-white ${bgColorClass}`}
+            >{cellValue}</Button>
         </>
       );
     }
@@ -154,18 +183,28 @@ export default function App() {
           )}
         </TableBody>
       </Table>
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
+      <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+        <ModalContent >
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
                 {currentItem ? 
-                  `Score report for ${currentItem.first_name} ${currentItem.last_name}` 
+                  `Score report and eye tracking footage for ${currentItem.first_name} ${currentItem.last_name}` 
                   : 'Score Report'
                 }
               </ModalHeader>
-              <ModalBody>
-                {currentItem && <NewChart scoreHistory={currentItem.score_history} />}
+              <ModalBody style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                {currentItem && <NewChart scoreHistory={currentItem.score_history}/>}
+                <Divider orientation="vertical"></Divider>
+                { currentItem &&
+                <Card radius="none" style={{ textAlign: 'center' }}>
+                  {`Eye tracking footage for ${currentItem.first_name} ${currentItem.last_name}` }
+                  <video
+                    width="560"
+                    height="315"
+                    src={videoSrc}
+                  ></video>
+                </Card>}
               </ModalBody>
               <ModalFooter>
               </ModalFooter>
