@@ -8,7 +8,7 @@ import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from "axios";
-import { FAST_API_URL } from "./Constants";
+import { FAST_API_URL } from "./constants";
 
 const EyeTracking = ({navigation}) => {
 

@@ -8,19 +8,21 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
-import { FAST_API_URL } from "./Constants";
+import { FAST_API_URL } from "./constants";
+
+const MAX_SCALE = 1.5; // maximum scale when loud
+const MIN_SCALE = 0.8; // minimum scale when quiet
+const MAX_DB = -10; // quite loud
+const MIN_DB = -60; // very quiet
 
 const Conversation = () => {
     const [recording, setRecording] = useState(null);
     const [recordingStatus, setRecordingStatus] = useState('idle');
     const [audioPermission, setAudioPermission] = useState(null);
 
-    const [isRecording, setIsRecording] = useState(false);
-    const microphoneScale = new Animated.Value(1);
+    const [microphoneScale] = useState(new Animated.Value(1));
 
     const startRecordingAnim = () => {
-        setIsRecording(true);
-        // Start the animation
         Animated.loop(
             Animated.sequence([
                 Animated.timing(microphoneScale, {
@@ -33,17 +35,29 @@ const Conversation = () => {
                     duration: 500,
                     useNativeDriver: true,
                 }),
-            ]),
-            { iterations: -1 }
+            ])
         ).start();
-        handleRecordButtonPress();
     };
 
     const stopRecordingAnim = () => {
-        setIsRecording(false);
-        // Stop the animation
         microphoneScale.stopAnimation();
     };
+
+    const onStatusUpdate = (status) => {
+        const normalizedValue = (status.metering - MIN_DB) / (MAX_DB - MIN_DB);
+        
+        const scaleValue = normalizedValue * (MAX_SCALE - MIN_SCALE) + MIN_SCALE;
+
+        console.log(scaleValue);
+
+        if (typeof scaleValue === 'number' && scaleValue > 0 && scaleValue < 2) {
+            Animated.timing(microphoneScale, {
+                toValue: scaleValue,
+                duration: 5,
+                useNativeDriver: true,
+            }).start();
+        }
+    }
 
 
     useEffect(() => {
@@ -59,7 +73,7 @@ const Conversation = () => {
 
         // Call function to get permission
         getPermission()
-        // Cleanup upon first render
+
         return () => {
             if (recording) {
                 stopRecording();
@@ -77,8 +91,10 @@ const Conversation = () => {
                     playsInSilentModeIOS: true
                 })
             }
-
+            startRecordingAnim();
             const newRecording = new Audio.Recording();
+            newRecording.setOnRecordingStatusUpdate(onStatusUpdate);
+            newRecording.setProgressUpdateInterval(10);
             console.log('Starting Recording')
             await newRecording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
             await newRecording.startAsync();
@@ -97,6 +113,8 @@ const Conversation = () => {
                 await recording.stopAndUnloadAsync();
                 const recordingUri = recording.getURI();
 
+                stopRecordingAnim();
+
                 // Create a file name for the recording
                 const fileName = `recording-${Date.now()}.caf`;
 
@@ -110,10 +128,11 @@ const Conversation = () => {
                 // upload the uri and send the post
                 uploadAudio(FileSystem.documentDirectory + 'recordings/' + `${fileName}`);
 
-                // This is for simply playing the sound back
-                const playbackObject = new Audio.Sound();
-                await playbackObject.loadAsync({ uri: FileSystem.documentDirectory + 'recordings/' + `${fileName}` });
-                await playbackObject.playAsync();
+                // // This is for simply playing the sound back
+                // const playbackObject = new Audio.Sound();
+                // await playbackObject.loadAsync({ uri: FileSystem.documentDirectory + 'recordings/' + `${fileName}` });
+                // await playbackObject.playAsync();
+                
 
                 // resert our states to record again
                 setRecording(null);
@@ -146,7 +165,7 @@ const Conversation = () => {
         });
 
         try {
-            const response = await axios.post(`${FAST_API_URL}/upload_audio/`, data);
+            const response = await axios.post(`${FAST_API_URL}/api/v1/upload_audio/`, data);
             console.log('Uploaded and transcribed: ', response.data);
         } catch (error) {
             console.error('Error uploading:', error);
