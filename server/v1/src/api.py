@@ -11,7 +11,7 @@ from pydub import AudioSegment
 from v1.src.util.responsemodel import ResponseModel
 from v1.src.modules.persistence import Persistence
 from v1.src.modules.session_handler import SessionHandler
-from v1.src.modules.openai_module import OpenAIModule
+from v1.src.modules.transcriptions import Transcriptions
 
 app: FastAPI = FastAPI()
 
@@ -54,11 +54,15 @@ async def get_user(user_id: str = Query()):
         message={"user_data": Persistence.get_user(user_id=user_id)}
     )
 
-@app.get(f"{API_V1_ENDPOINT}/chat/create_session")
+@app.post(f"{API_V1_ENDPOINT}/chat/create_session")
 async def create_session(user_id: str = Query()):
     return StreamingResponse(SessionHandler.create_session(user_id=user_id))
 
-@app.post("/upload_audio/")
+@app.get(f"{API_V1_ENDPOINT}/chat/get_response")
+async def get_response(user_id: str = Query(), query: str = Query()):
+    return StreamingResponse(SessionHandler.get_chatbot_response(user_id=user_id, query=query))
+
+@app.post(f"{API_V1_ENDPOINT}/upload_audio/")
 async def upload_audio(file: UploadFile = File(...)):
     temp_path = UPLOAD_DIRECTORY / file.filename
     with temp_path.open("wb") as buffer:
@@ -69,7 +73,7 @@ async def upload_audio(file: UploadFile = File(...)):
     AudioSegment.from_file(str(temp_path)).export(str(mp3_path), format="mp3")
 
     with open(mp3_path, "rb") as f:
-        response = await OpenAIModule.whisper_transcription(f)
+        response = await Transcriptions.whisper_transcription(f)
         transcription = response['text']
 
     Path(temp_path).unlink()
@@ -80,9 +84,9 @@ async def upload_audio(file: UploadFile = File(...)):
         message={"transcription": transcription}
     )
 
+# remove this once modal endpoint works.
 @app.post("/upload_video/")
 async def upload_video(file: UploadFile = File(...)):
-    print('ghj')
     # Ensure the upload directory exists
     UPLOAD_DIRECTORY = Path(__file__).parent / "uploads"
     UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
@@ -92,13 +96,8 @@ async def upload_video(file: UploadFile = File(...)):
     with temp_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    mp3_path = UPLOAD_DIRECTORY / "video.mov"
-
-    AudioSegment.from_file(str(temp_path)).export(str(mp3_path), format="mov")
-
     # Clean up (Optional: remove temporary files)
     Path(temp_path).unlink()
-    Path(mp3_path).unlink()
 
     return ResponseModel(
         success=True,

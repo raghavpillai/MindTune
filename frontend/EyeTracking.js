@@ -8,7 +8,7 @@ import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from "axios";
-
+import { FAST_API_URL } from "./Constants";
 
 const EyeTracking = ({navigation}) => {
 
@@ -77,7 +77,7 @@ const EyeTracking = ({navigation}) => {
         });
 
         try {
-            const response = await axios.post('http://0.0.0.0:8080/upload_video/', data);
+            const response = await axios.post(`${FAST_API_URL}/upload_video/`, data);
             console.log('Uploaded and transcribed: ', response.data);
         } catch (error) {
             console.error('Error uploading:', error);

@@ -114,6 +114,7 @@ class Persistence:
                         FOREIGN KEY (user_id) REFERENCES users(user_id))""")
             
             conn.close()
+            generate_dummy_data()
 
 def generate_dummy_data():
     names = [("John", "Doe"), ("Jane", "Smith"), ("Alice", "Johnson"), ("Bob", "White"), ("Charlie", "Brown"),
