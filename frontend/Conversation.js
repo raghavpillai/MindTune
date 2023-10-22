@@ -253,6 +253,20 @@ const Conversation = () => {
                         />
                     </TouchableOpacity>
                 </Animated.View>
+                {!timerDone ? <Text style={styles.pText}>{curAudio}</Text> :
+                <Button
+                        onPress={handleRecordButtonPress}
+                        textAlign='center'
+                        fontSize={20}
+                        width={140}
+                        marginTop={40}
+                        color={"black"}
+                        backgroundColor={"transparent"}
+                        borderWidth={1}
+                        borderColor={"black"}
+                        display={"block"}
+                >submit</Button>
+                }
 
                 {/* {Object.keys(audioRefs).map(peerId => (
                     <audio key={peerId} controls autoPlay ref={audioRefs[peerId]} style={{ display: 'none' }}></audio>

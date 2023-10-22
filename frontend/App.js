@@ -10,6 +10,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Conversation from "./Conversation";
 import EyeTracking from "./EyeTracking";
 import Dashboard from "./Dashboard";
+import Dashboard2 from "./Dashboard2";
 
 import { encode as btoa, decode as atob } from 'base-64';
 
@@ -143,7 +144,7 @@ const Home = ({navigation}) => {
                 fontSize={21}
                 backgroundColor={"white"}
                 color={"$blue9"}
-                onPress={() => navigation.navigate('EyeTracking')}
+                onPress={() => navigation.navigate('Dashboard2')}
               >
                 See Your Progress
               </Button>
@@ -165,8 +166,9 @@ export default function App() {
       <Stack.Navigator initialRouteName="Home">
         <Stack.Screen name="Home" component={Home} options={{ headerShown: false }}/>
         <Stack.Screen name="Conversation" component={Conversation} options={{ headerShown: false }}/>
-        <Stack.Screen name="EyeTracking" component={EyeTracking} options={{headerTitle: (props) => <></>}}/>
+        <Stack.Screen name="EyeTracking" component={EyeTracking} options={{headerShown: false}}/>
         <Stack.Screen name="Dashboard" component={Dashboard} options={{headerTitle: (props) => <></>}}/>
+        <Stack.Screen name="Dashboard2" component={Dashboard2} options={{headerTitle: (props) => <></>}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

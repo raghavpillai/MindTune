@@ -38,6 +38,15 @@ class SessionHandler:
         await done_event.wait()
 
     @classmethod
+    async def get_speech_from_text(cls, text: str) -> AsyncGenerator[Any, Any]:
+        done_event = asyncio.Event()
+        async for result in TTSHandler.generate_audio_async(text, done_event=done_event):
+            yield json.dumps({
+                'chunk': base64.b64encode(result['chunk']).decode('utf-8')
+            })
+        await done_event.wait()
+
+    @classmethod
     async def create_session(cls, user_id: str) -> AsyncGenerator[Any, Any]:
         user_details = Persistence.get_user(user_id=user_id)
         if not user_details:
