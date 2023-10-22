@@ -62,6 +62,7 @@ async def create_session(user_id: str = Query()):
 async def get_response(user_id: str = Query(), query: str = Query()):
     return StreamingResponse(SessionHandler.get_chatbot_response(user_id=user_id, query=query))
 
+# will need to return the streamingresponse as well as a true/false of whether to continue the test
 @app.post(f"{API_V1_ENDPOINT}/upload_audio/")
 async def upload_audio(file: UploadFile = File(...)):
     temp_path = UPLOAD_DIRECTORY / file.filename
