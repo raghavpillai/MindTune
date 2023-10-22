@@ -8,7 +8,7 @@ import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from "axios";
-import { FAST_API_URL } from "./Constants";
+import { FAST_API_URL } from "./constants";
 
 const EyeTracking = ({navigation}) => {
 
@@ -79,6 +79,7 @@ const EyeTracking = ({navigation}) => {
         try {
             const response = await axios.post(`${FAST_API_URL}/upload_video/`, data);
             console.log('Uploaded and transcribed: ', response.data);
+            navigation.navigate("Dashboard");
         } catch (error) {
             console.error('Error uploading:', error);
             if (error.response) {
@@ -107,7 +108,7 @@ const EyeTracking = ({navigation}) => {
         animatedValue.stopAnimation();
       } else {
         takeVideo();
-        await timeout(1000);
+        await timeout(2000);
         console.log("started")
         setIsMoving(true);
         iterationCount.current = 0;

@@ -9,7 +9,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Conversation from "./Conversation";
 import EyeTracking from "./EyeTracking";
-
+import Dashboard from "./Dashboard";
 
 const Home = ({navigation}) => {
 
@@ -155,6 +155,7 @@ export default function App() {
         <Stack.Screen name="Home" component={Home} options={{ headerTitle: (props) => <></> }}/>
         <Stack.Screen name="Conversation" component={Conversation} options={{ headerTitle: (props) => <></> }}/>
         <Stack.Screen name="EyeTracking" component={EyeTracking} options={{headerTitle: (props) => <></>}}/>
+        <Stack.Screen name="Dashboard" component={Dashboard} options={{headerTitle: (props) => <></>}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

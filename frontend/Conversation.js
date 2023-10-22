@@ -8,7 +8,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
-import { FAST_API_URL } from "./Constants";
+import { FAST_API_URL } from "./constants";
 
 const Conversation = () => {
     const [recording, setRecording] = useState(null);
