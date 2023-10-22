@@ -19,13 +19,10 @@ const Conversation = () => {
     const [recording, setRecording] = useState(null);
     const [recordingStatus, setRecordingStatus] = useState('idle');
     const [audioPermission, setAudioPermission] = useState(null);
-<<<<<<< HEAD
     const [curAudio, setCurAudio] = useState("");
     const [userSpokenText, setUserSpokenText] = useState("");
     const [timerDone, setTimerDone] = useState("");
-=======
     const [audioRefs, setAudioRefs] = useState({});
->>>>>>> 50cc057822698ec4f9a60d8343900ca4f2a6f8e1
 
     const [microphoneScale] = useState(new Animated.Value(1));
 
