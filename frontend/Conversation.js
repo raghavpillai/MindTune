@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, ImageBackground, Animated, Text, TouchableOpacity } from "react-native";
-import { TamaguiProvider } from "tamagui";
+import { TamaguiProvider, TextArea } from "tamagui";
 import config from "./tamagui.config";
 import { Button, XStack, Image } from "tamagui";
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -12,38 +12,32 @@ import { FAST_API_URL } from "./constants";
 import io from 'socket.io-client';
 
 const MAX_SCALE = 1.5; // maximum scale when loud
-const MIN_SCALE = 0.8; // minimum scale when quiet
+const MIN_SCALE = 0.4; // minimum scale when quiet
 const MAX_DB = -10; // quite loud
-const MIN_DB = -60; // very quiet
+const MIN_DB = -70; // very quiet
 
 const Conversation = () => {
     const [recording, setRecording] = useState(null);
     const [recordingStatus, setRecordingStatus] = useState('idle');
     const [audioPermission, setAudioPermission] = useState(null);
+    const [curAudio, setCurAudio] = useState("");
+    const [userSpokenText, setUserSpokenText] = useState("");
+    const [timerDone, setTimerDone] = useState("");
     const [audioRefs, setAudioRefs] = useState({});
     const [socket, setSocket] = useState(null);
     const [message, setMessage] = useState('');
     const [textResponse, setTextResponse] = useState('');
 
+    const playChunk = async (base64Chunk) => {
+        let newsound = await Audio.Sound.createAsync({
+            uri: `data:audio/mp3;base64,${base64Chunk}`,
+        });
+        console.log(newsound)
+    
+        await newsound.playAsync();
+    };
+
     const [microphoneScale] = useState(new Animated.Value(1));
-
-    const mp3Path = FileSystem.documentDirectory + 'temporary.mp3';
-
-    let sound = new Audio.Sound();
-
-    async function play() {
-        console.log("play");
-        try {
-            if (!sound._loaded) {
-                await sound.loadAsync({ uri: mp3Path });
-                await sound.playAsync();
-            } else {
-                await sound.playFromPositionAsync(0);
-            }
-        } catch (error) {
-            console.error("Error playing audio:", error);
-        }
-    }
 
     const startRecordingAnim = () => {
         Animated.loop(
@@ -76,39 +70,11 @@ const Conversation = () => {
         if (typeof scaleValue === 'number' && scaleValue > 0 && scaleValue < 2) {
             Animated.timing(microphoneScale, {
                 toValue: scaleValue,
-                duration: 5,
+                duration: 3,
                 useNativeDriver: true,
             }).start();
         }
     }
-
-    const [soundBuffer, setSoundBuffer] = useState('');  // Maintain base64 buffer
-    const soundRef = useRef(null);  // Sound instance reference
-
-    const playChunk = (chunk) => {
-        // Append the chunk to the existing buffer
-        setSoundBuffer(prevBuffer => prevBuffer + chunk);
-
-        if (soundRef.current) {
-            soundRef.current.release();
-        }
-
-        const soundInstance = new Sound(
-        `data:audio/mp3;base64,${soundBuffer}`,
-        null,
-        (error) => {
-            if (error) {
-            console.warn('failed to load the sound', error);
-            return;
-            }
-
-            soundRef.current.play((success) => {
-            if (!success) {
-                console.warn('Sound did not play successfully');
-            }
-            });
-        }
-    )};
 
 
     useEffect(() => {
@@ -136,8 +102,7 @@ const Conversation = () => {
                 setTextResponse(result.text);
             }else if (type == "chunk") {
                 console.log("Got chunk with length " + parsedResult.chunk.length)
-                console.log(parsedResult.chunk)
-                playChunk(parsedResult.chunk)
+                playChunk(parsedResult.chunk);
             }
 
         });
@@ -181,6 +146,17 @@ const Conversation = () => {
             console.error('Failed to start recording', error);
         }
     }
+
+    useEffect(() => {
+        const startYO = async () => {
+            await setTimeout(() => {
+                setTimerDone(true);
+            }, 5000);
+        }
+        if (recordingStatus === 'recording') {
+            startYO();
+        }
+    }, [recordingStatus])
 
     async function stopRecording() {
         try {
@@ -276,9 +252,9 @@ const Conversation = () => {
                         style={styles.microphoneButton}
                     >
                         <Icon
-                            name={recording ? 'microphone' : 'microphone-slash'}
-                            size={200}
-                            color="red"
+                            name={recording ? 'circle' : 'play'}
+                            size={recording ? 150 : 150}
+                            color="black"
                         />
                     </TouchableOpacity>
                 </Animated.View>
@@ -288,13 +264,18 @@ const Conversation = () => {
                         textAlign='center'
                         fontSize={20}
                         width={140}
-                        marginTop={40}
                         color={"black"}
                         backgroundColor={"transparent"}
                         borderWidth={1}
                         borderColor={"black"}
                         display={"block"}
                 >submit</Button>
+                }
+
+                {recordingStatus === 'recording' &&
+                <View flex={1} justifyContent={'flex-end'}>
+                    <TextArea value={userSpokenText} width={350} height={150} marginBottom={30} borderWidth={1} borderColor="black"/>
+                </View>
                 }
 
                 {/* {Object.keys(audioRefs).map(peerId => (
@@ -314,9 +295,14 @@ const styles = StyleSheet.create({
     },
     headerText: {
         fontSize: 30,
-        marginTop: 50,
+        marginTop: 100,
         paddingBottom: 100,
         fontWeight: 'bold',
+    },
+    pText: {
+        fontSize: 20,
+        padding: 30,
+        minHeight: 30
     },
     microphoneContainer: {
         marginTop: 20,

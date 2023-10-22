@@ -2,7 +2,7 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import React, { useEffect, useRef } from "react";
 import { StyleSheet, View, ImageBackground, Animated } from "react-native";
-import { TamaguiProvider } from "tamagui";
+import { TamaguiProvider, TextArea } from "tamagui";
 import config from "./tamagui.config";
 import { Button, XStack, Image } from "tamagui";
 import { NavigationContainer } from "@react-navigation/native";
