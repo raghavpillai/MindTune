@@ -53,10 +53,7 @@ const Conversation = () => {
 
     const onStatusUpdate = (status) => {
         const normalizedValue = (status.metering - MIN_DB) / (MAX_DB - MIN_DB);
-
         const scaleValue = normalizedValue * (MAX_SCALE - MIN_SCALE) + MIN_SCALE;
-
-        console.log(scaleValue);
 
         if (typeof scaleValue === 'number' && scaleValue > 0 && scaleValue < 2) {
             Animated.timing(microphoneScale, {
@@ -79,7 +76,7 @@ const Conversation = () => {
         }
         
         console.log(1);
-        const socketIo = io(`wss://${FAST_API_URL}/`, {
+        const socketIo = io(`${FAST_API_URL}`, {
             transports: ["websocket"],
             path: "/ws/socket.io",
         });
@@ -208,9 +205,14 @@ const Conversation = () => {
             name: 'audio.caf',
             type: 'audio/caf',
         });
-
+        console.log('Uploading: ', data);
         try {
-            const response = await axios.post(`https://${FAST_API_URL}/api/v1/upload_audio`, data);
+            const axiosInstance = axios.create({
+                maxRedirects: 5, // Set the maximum number of redirects to follow
+                validateStatus: (status) => status >= 200 && status < 400, // Validate the response status
+            });
+
+            const response = await axiosInstance.post(`${FAST_API_URL}/api/v1/upload_audio/`, data);
             console.log('Uploaded and transcribed: ', response.data);
             socket.emit('chatbot', {
                 "user_id": "john_doe",
