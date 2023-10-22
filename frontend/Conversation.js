@@ -82,6 +82,34 @@ const Conversation = () => {
         }
     }
 
+    const [soundBuffer, setSoundBuffer] = useState('');  // Maintain base64 buffer
+    const soundRef = useRef(null);  // Sound instance reference
+
+    const playChunk = (chunk) => {
+        // Append the chunk to the existing buffer
+        setSoundBuffer(prevBuffer => prevBuffer + chunk);
+
+        if (soundRef.current) {
+            soundRef.current.release();
+        }
+
+        const soundInstance = new Sound(
+        `data:audio/mp3;base64,${soundBuffer}`,
+        null,
+        (error) => {
+            if (error) {
+            console.warn('failed to load the sound', error);
+            return;
+            }
+
+            soundRef.current.play((success) => {
+            if (!success) {
+                console.warn('Sound did not play successfully');
+            }
+            });
+        }
+    )};
+
 
     useEffect(() => {
         async function getPermission() {
@@ -109,6 +137,7 @@ const Conversation = () => {
             }else if (type == "chunk") {
                 console.log("Got chunk with length " + parsedResult.chunk.length)
                 console.log(parsedResult.chunk)
+                playChunk(parsedResult.chunk)
             }
 
         });
@@ -275,6 +304,7 @@ const Conversation = () => {
         </TamaguiProvider>
     )
 }
+export default Conversation;
 
 const styles = StyleSheet.create({
     container: {
@@ -297,4 +327,3 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Conversation;
