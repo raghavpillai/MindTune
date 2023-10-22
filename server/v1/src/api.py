@@ -54,6 +54,27 @@ async def get_user(user_id: str = Query()):
         message={"user_data": Persistence.get_user(user_id=user_id)}
     )
 
+@sio.on("connect")
+async def connect(sid, environ):
+    print("connect ", sid)
+
+@sio.on("disconnect")
+async def disconnect(sid):
+    print("disconnect ", sid)
+
+@sio.on("chatbot")
+async def chatbot(sid, data: Dict[str, Any]):
+    user_id: str = data.get("user_id")
+    command: str = data.get("command")
+    
+    if command == "create_session":
+        async for result in SessionHandler.create_session(user_id=user_id):
+            await sio.emit("chatbot", result, room=sid)
+    elif command == "get_response":
+        query: str = data.get("query")
+        async for result in SessionHandler.get_chatbot_response(user_id=user_id, query=query):
+            await sio.emit("chatbot", result, room=sid)
+
 @app.get(f"{API_V1_ENDPOINT}/chat/create_session")
 async def create_session(user_id: str = Query()):
     return StreamingResponse(SessionHandler.create_session(user_id=user_id))
