@@ -97,7 +97,6 @@ const Home = ({navigation}) => {
                 transform: [{ translateY: logoTranslateY }],
               }}
             >
-              
               <Image
                 style={{
                   resizeMode: "cover",
@@ -133,7 +132,7 @@ const Home = ({navigation}) => {
                 fontSize={21}
                 backgroundColor={"white"}
                 color={"$blue9"}
-                onPress={() => navigation.navigate('Dashboard2')}
+                onPress={() => navigation.navigate('EyeTracking')}
               >
                 See Your Progress
               </Button>
