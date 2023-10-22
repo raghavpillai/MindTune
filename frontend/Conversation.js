@@ -409,6 +409,7 @@ const Conversation = () => {
                         textAlign='center'
                         fontSize={20}
                         width={140}
+                        marginTop={40}
                         color={"black"}
                         backgroundColor={"transparent"}
                         borderWidth={1}

@@ -81,7 +81,7 @@ const EyeTracking = ({navigation}) => {
         try {
             const response = await axios.post(`https://shreyj1729--mind-tune-get-eyetracking-results-dev.modal.run`, data);
             console.log('Uploaded and transcribed: ', response.data);
-            navigation.navigate("Dashboard");
+            navigation.navigate("Dashboard", {data: response.data});
         } catch (error) {
             console.error('Error uploading:', error);
             if (error.response) {
@@ -227,7 +227,6 @@ const EyeTracking = ({navigation}) => {
             </View>
             }
             </>
-
 
             <View style={{alignItems: 'center', justifyContent: 'center', height: 140}}>
                 <Button size="$6" onPress={() => setCamOK(true)}
