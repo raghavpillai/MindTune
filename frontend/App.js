@@ -96,6 +96,7 @@ const Home = ({navigation}) => {
                 transform: [{ translateY: logoTranslateY }],
               }}
             >
+              
               <Image
                 style={{
                   resizeMode: "cover",

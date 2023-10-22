@@ -22,6 +22,7 @@ const EyeTracking = ({navigation}) => {
     const [camera, setCamera] = useState(null);
     const [record, setRecord] = useState(null);
     const [type, setType] = useState(Camera.Constants.Type.front);    
+    const [camOK, setCamOK] = useState(false);
 
 
     useEffect(() => {
@@ -54,11 +55,11 @@ const EyeTracking = ({navigation}) => {
     }, [record])
 
     const takeVideo = async () => {
-    if(camera){
-        const data = await camera.recordAsync()
-        setRecord(data.uri);
-        console.log(data.uri);
-    }
+        if(camera){
+            const data = await camera.recordAsync()
+            setRecord(data.uri);
+            console.log(data.uri);
+        }
     }
 
     const stopVideo = async () => {
@@ -95,13 +96,19 @@ const EyeTracking = ({navigation}) => {
             }
         }
     };
+    
+    function timeout(delay) {
+        return new Promise( res => setTimeout(res, delay) );
+    }
 
-
-    const handleButtonPress = () => {
+    const handleButtonPress = async () => {
       if (isMoving) {
         setIsMoving(false);
         animatedValue.stopAnimation();
       } else {
+        takeVideo();
+        await timeout(1000);
+        console.log("started")
         setIsMoving(true);
         iterationCount.current = 0;
         startAnimation();
@@ -184,42 +191,24 @@ const EyeTracking = ({navigation}) => {
     return(
         <TamaguiProvider config={config}>
         <View style={styles.container}>
-            <Text style={styles.headerText}>Try to follow the dot as it moves around the screen</Text>
-            
 
-            <View style={styles.cameraContainer}>
-                <Camera 
+            <>
+            {!camOK && <Text style={styles.headerText2}>Make sure you've removed your glasses and your face is in frame</Text>}
+            </>
+            <>
+            {camOK && <Text style={styles.headerText}>Try to follow the dot as it moves around the screen</Text>}
+            </>
+            <View style={camOK ? styles.cameraContainer2 : styles.cameraContainer}>
+                <Camera
                 ref={ref => setCamera(ref)}
-                style={styles.fixedRatio} 
+                style={camOK ? styles.fixedRatio2 : styles.fixedRatio} 
                 type={type}
                 ratio={'4:3'} />
             </View>
 
-            <Btn title="Take video" onPress={() => takeVideo()} />
-            <Btn title="Stop Video" onPress={() => stopVideo()} />
-
-
-            <Video
-            ref={video}
-            style={styles.video}
-            source={{
-                uri: record,
-            }}
-            useNativeControls
-            resizeMode="contain"
-            isLooping
-            onPlaybackStatusUpdate={status => setStatus(() => status)}
-            />
-            <View style={styles.buttons}>
-            <Btn
-                title={status.isPlaying ? 'Pause' : 'Play'}
-                onPress={() =>
-                status.isPlaying ? video.current.pauseAsync() : video.current.playAsync()
-                }
-            />
-            </View>
-
-            {/* <View width="100%" height="100%" flex={1} borderColor={"gray"} borderWidth={1}>
+            <>
+            {camOK && 
+            <View width="100%" height="100%" flex={1} borderColor={"gray"} borderWidth={1}>
             <Animated.View
                 style={{
                 position: 'absolute',
@@ -232,22 +221,33 @@ const EyeTracking = ({navigation}) => {
                 style={{ width: 70, height: 70 }}
                 />
             </Animated.View>
-            </View> */}
+            </View>
+            }
+            </>
 
 
-{/* 
             <View style={{alignItems: 'center', justifyContent: 'center', height: 140}}>
+                <Button size="$6" onPress={() => setCamOK(true)}
+                        textAlign='center'
+                        fontSize={21}
+                        width={175}
+                        color={"white"}
+                        backgroundColor={"$blue9"}
+                        display={camOK ? "none" : "block"}
+                >
+                    Ready!
+                </Button>
                 <Button size="$6" onPress={handleButtonPress}
                         textAlign='center'
                         fontSize={21}
                         width={175}
                         color={"white"}
                         backgroundColor={"$blue9"}
-                        display={isMoving ? "none" : (hasMoved ? "none" : "block")}
+                        display={camOK ? (isMoving ? "none" : (hasMoved ? "none" : "block")) : 'none'}
                 >
                     Start
                 </Button>
-                <Button size="$6" onPress={() => navigation.navigate('Home')}
+                <Button size="$6" onPress={() => stopVideo()}
                         textAlign='center'
                         fontSize={21}
                         width={175}
@@ -257,7 +257,7 @@ const EyeTracking = ({navigation}) => {
                 >
                     Continue
                 </Button>
-            </View> */}
+            </View>
 
         </View>
       </TamaguiProvider>
@@ -270,25 +270,49 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'flex-start',
-      },
-      headerText: {
+    },
+    headerText: {
         fontSize: 30,
         marginTop: 50,
         paddingBottom: 100,
         fontWeight: 'bold',
         textAlign: 'center',
-      },
-      bottomText: {
+    },
+    headerText2: {
+        fontSize: 20,
+        marginTop: 50,
+        marginHorizontal: 10,
+        paddingBottom: 100,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    bottomText: {
         fontSize: 20,
         marginTop: 70,
-      },
-      cameraContainer: {
-        flex: 1,
-        flexDirection: 'row'
+    },
+    cameraContainer: {
+        width: 300,
+        height: 300,
+        width: '100%',
+        alignItems: 'center',
+    },
+    cameraContainer2: {
+        width: 60,
+        height: 60,
+        width: '100%',
+        alignItems: 'flex-start',
+        position: 'absolute'
     },
     fixedRatio:{
-        flex: 1,
-        aspectRatio: 1
+        aspectRatio: 1,
+        width: 100,
+        height: 300
+    },
+    fixedRatio2:{
+        aspectRatio: 1,
+        width: 50,
+        height: 50,
+        opacity: 0.3
     },
     video: {
       alignSelf: 'center',
