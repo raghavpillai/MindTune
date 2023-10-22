@@ -102,7 +102,7 @@ export default function App() {
           // Transform the data to match the Row interface
           const formattedData = data.message.user_data.map((user: any, index: number) => ({
             key: (index + 1).toString(),
-            user_id: "U00" + (index + 1),
+            user_id: user.user_id,
             first_name: user.first_name,
             last_name: user.last_name,
             age: user.age,
