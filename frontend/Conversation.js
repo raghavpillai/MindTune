@@ -8,6 +8,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
+import { FAST_API_URL } from "./Constants";
 
 const Conversation = () => {
     const [recording, setRecording] = useState(null);
@@ -145,7 +146,7 @@ const Conversation = () => {
         });
 
         try {
-            const response = await axios.post('http://0.0.0.0:8080/upload_audio/', data);
+            const response = await axios.post(`${FAST_API_URL}/upload_audio/`, data);
             console.log('Uploaded and transcribed: ', response.data);
         } catch (error) {
             console.error('Error uploading:', error);
