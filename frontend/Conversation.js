@@ -28,15 +28,6 @@ const Conversation = () => {
     const [message, setMessage] = useState('');
     const [textResponse, setTextResponse] = useState('');
 
-    const playChunk = async (base64Chunk) => {
-        let newsound = await Audio.Sound.createAsync({
-            uri: `data:audio/mp3;base64,${base64Chunk}`,
-        });
-        console.log(newsound)
-    
-        await newsound.playAsync();
-    };
-
     const [microphoneScale] = useState(new Animated.Value(1));
 
     const startRecordingAnim = () => {
@@ -76,7 +67,7 @@ const Conversation = () => {
         }
     }
 
-
+    let total = ''
     useEffect(() => {
         async function getPermission() {
             await Audio.requestPermissionsAsync().then((permission) => {
@@ -102,7 +93,9 @@ const Conversation = () => {
                 setTextResponse(result.text);
             }else if (type == "chunk") {
                 console.log("Got chunk with length " + parsedResult.chunk.length)
-                playChunk(parsedResult.chunk);
+                total += parsedResult.chunk;
+            } else if (type == "status") {
+                console.log("Playing chunk")
             }
 
         });
@@ -219,6 +212,13 @@ const Conversation = () => {
         try {
             const response = await axios.post(`${FAST_API_URL}/api/v1/upload_audio/`, data);
             console.log('Uploaded and transcribed: ', response.data);
+            socket.emit('chatbot', {
+                "user_id": "john_doe",
+                "command": "get_response",
+                "query": response.data.message.transcription
+            });
+            
+
         } catch (error) {
             console.error('Error uploading:', error);
             if (error.response) {

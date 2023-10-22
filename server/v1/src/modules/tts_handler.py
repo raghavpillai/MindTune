@@ -35,6 +35,7 @@ class TTSHandler:
                 model="eleven_monolingual_v1",
                 stream=True
             )
+            stream(audio_stream)
 
             for chunk in audio_stream:
                 with condition:

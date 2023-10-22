@@ -9,6 +9,7 @@ from v1.src.modules.tts_handler import TTSHandler
 
 class SessionHandler:
     chatbot_sessions: Dict[str, Chatbot] = {}
+    question_count = 0
 
     @classmethod
     async def get_chatbot_response(cls, user_id: str, query: str, done_event: asyncio.Event=asyncio.Event()) -> AsyncGenerator[Any, Any]:
@@ -16,6 +17,25 @@ class SessionHandler:
             yield "User not found"
             return
         chatbot = cls.chatbot_sessions[user_id]
+        
+        if cls.question_count > 5:
+            done_event.clear()
+            async for result in TTSHandler.generate_audio_async(chatbot.chat_completion(f"{query}. That's my last question. Say thank for my time and you'll be in touch."), done_event=done_event):
+                if 'text' in result:
+                    print(result)
+                    yield json.dumps({"type": "text", "text": result['text']})
+                elif 'chunk' in result:
+                    yield json.dumps({
+                        'type': 'chunk', 
+                        'chunk': base64.b64encode(result['chunk']).decode('utf-8')
+                    })
+            cls.question_count += 1
+            yield json.dumps({'type': 'status', "status": "success"})
+            yield json.dumps({'type': 'ending', "status": "success"})
+            await done_event.wait()
+
+        
+        
 
         done_event.clear()
         async for result in TTSHandler.generate_audio_async(chatbot.chat_completion(query), done_event=done_event):
@@ -27,6 +47,8 @@ class SessionHandler:
                     'type': 'chunk', 
                     'chunk': base64.b64encode(result['chunk']).decode('utf-8')
                 })
+        cls.question_count += 4
+        yield json.dumps({'type': 'status', "status": "success"})
         await done_event.wait()
 
 
@@ -67,12 +89,11 @@ class SessionHandler:
             welcome me back and tell me something along the lines of you're looking forward to getting started with their checkup and let's begin. 
             """, done_event):
             yield result
-
+        
         chatbot.add_system_message("Begin the Alzheimer's test now.")
         async for result in cls.get_chatbot_response(user_id, "Let's start the session. Start asking me questions, one at a time so I can respond.", done_event):
             yield result
         
-        yield json.dumps({'type': 'status', "status": "success"})
         print("Fulfilled creating session")
 
         # questions = 0
