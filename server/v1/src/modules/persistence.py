@@ -100,7 +100,7 @@ class Persistence:
     def initialize(cls) -> None:
         if not os.path.exists("../data"):
             os.makedirs("../data")
-        if not os.path.exists(DATABASE_PATH):
+        if os.path.exists(DATABASE_PATH):
             conn = sqlite3.connect(DATABASE_PATH)
             c = conn.cursor()
 

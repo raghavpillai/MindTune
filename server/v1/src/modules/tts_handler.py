@@ -3,7 +3,7 @@ import re
 import threading
 from dotenv import load_dotenv
 from elevenlabs import generate, set_api_key, play, stream
-from typing import Callable, AsyncGenerator, List
+from typing import Callable, AsyncGenerator, List, Any
 
 load_dotenv()
 set_api_key(os.getenv("ELEVENLABS_API_KEY"))
@@ -23,7 +23,7 @@ class TTSHandler:
             yield item
 
     @classmethod
-    async def generate_audio_async(cls, text_stream_fn: Callable[[str], AsyncGenerator], done_event: threading.Event = None) -> None:
+    async def generate_audio_async(cls, text_stream_fn: Callable[[str], AsyncGenerator], done_event: threading.Event = None) -> AsyncGenerator[Any, Any]:
         speak_queue = []
         audio_queue = []
         condition = threading.Condition()
