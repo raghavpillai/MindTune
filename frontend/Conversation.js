@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, ImageBackground, Animated, Text, TouchableOpacity } from "react-native";
-import { TamaguiProvider, TextArea } from "tamagui";
+import { TamaguiProvider } from "tamagui";
 import config from "./tamagui.config";
 import { Button, XStack, Image } from "tamagui";
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -9,23 +9,41 @@ import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
 import { FAST_API_URL } from "./constants";
+import io from 'socket.io-client';
 
 const MAX_SCALE = 1.5; // maximum scale when loud
-const MIN_SCALE = 0.4; // minimum scale when quiet
+const MIN_SCALE = 0.8; // minimum scale when quiet
 const MAX_DB = -10; // quite loud
-const MIN_DB = -70; // very quiet
+const MIN_DB = -60; // very quiet
 
 const Conversation = () => {
     const [recording, setRecording] = useState(null);
     const [recordingStatus, setRecordingStatus] = useState('idle');
     const [audioPermission, setAudioPermission] = useState(null);
-    const [curAudio, setCurAudio] = useState("");
-    const [userSpokenText, setUserSpokenText] = useState("");
-    const [timerDone, setTimerDone] = useState("");
     const [audioRefs, setAudioRefs] = useState({});
+    const [socket, setSocket] = useState(null);
+    const [message, setMessage] = useState('');
+    const [textResponse, setTextResponse] = useState('');
 
     const [microphoneScale] = useState(new Animated.Value(1));
 
+    const mp3Path = FileSystem.documentDirectory + 'temporary.mp3';
+
+    let sound = new Audio.Sound();
+
+    async function play() {
+        console.log("play");
+        try {
+            if (!sound._loaded) {
+                await sound.loadAsync({ uri: mp3Path });
+                await sound.playAsync();
+            } else {
+                await sound.playFromPositionAsync(0);
+            }
+        } catch (error) {
+            console.error("Error playing audio:", error);
+        }
+    }
 
     const startRecordingAnim = () => {
         Animated.loop(
@@ -46,7 +64,6 @@ const Conversation = () => {
 
     const stopRecordingAnim = () => {
         microphoneScale.stopAnimation();
-        setCurAudio("");
     };
 
     const onStatusUpdate = (status) => {
@@ -54,17 +71,12 @@ const Conversation = () => {
 
         const scaleValue = normalizedValue * (MAX_SCALE - MIN_SCALE) + MIN_SCALE;
 
-        if (scaleValue > 1.3) {
-            setCurAudio("listening...")
-            setUserSpokenText(scaleValue.toString());
-        } else {
-            setCurAudio("start speaking...")
-        }
+        console.log(scaleValue);
 
         if (typeof scaleValue === 'number' && scaleValue > 0 && scaleValue < 2) {
             Animated.timing(microphoneScale, {
                 toValue: scaleValue,
-                duration: 3,
+                duration: 5,
                 useNativeDriver: true,
             }).start();
         }
@@ -72,7 +84,6 @@ const Conversation = () => {
 
 
     useEffect(() => {
-        // Simply get recording permission upon first render
         async function getPermission() {
             await Audio.requestPermissionsAsync().then((permission) => {
                 console.log('Permission Granted: ' + permission.granted);
@@ -81,184 +92,35 @@ const Conversation = () => {
                 console.log(error);
             });
         }
-
-        // create_session
-        async function createSession() {
-            const data = {
-                user_id: "john_doe"
-            }
-            const config = {
-                responseType: 'stream'
-            }
-            const response = await axios.post(`${FAST_API_URL}/create_session/`, data, config);
-
-            const stream = response.data;
-
-            stream.on('data', data => {
-                console.error(data);
-            });
-
-            stream.on('end', () => {
-                console.error("stream done");
-            });
-        }
-
-        function base64ToHex(base64String) {
-            // Decode the base64 string to a Uint8Array (byte array)
-            const byteArray = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
-
-            // Convert the byte array to a hex string
-            return Array.from(byteArray).map(byte => byte.toString(16).padStart(2, '0')).join('');
-        }
-
-        async function createSession2() {
-            try {
-                const endpoint = `${FAST_API_URL}/api/v1/chat/create_session/`;
-                const myParameter = 'john_doe';
-
-                const response = fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        user_id: myParameter
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                console.log(1);
-                const reader = response.body.getReader();
-                console.log(2);
-                // Read the streaming response
-                while (true) {
-                    const { done, value } = await reader.read();
-                    console.log(3);
-                    if (done) {
-                        console.log('Stream finished.');
-                        break;
-                    }
-
-                    // Handle each chunk (this assumes it's text; adjust as necessary)
-                    console.log(base64ToHex(value));
-                }
-
-            } catch (error) {
-                console.error('Error making the request:', error);
-            }
-        }
-
-        async function createSession3() {
-            const endpoint = `${FAST_API_URL}/api/v1/chat/create_session/`;
-            const response = await axios.get(endpoint, {
-                headers: {},
-                responseType: 'blob',
-                user_id: "john_doe"
-            });
-
-            const stream = response.data;
-
-            stream.on('data', data => {
-                console.log(data);
-            });
-
-            stream.on('end', () => {
-                console.log("stream done");
-            });
-        }
-
-        async function createSession4() {
-            console.log(2);
-            async function* getIterableStream(
-                body //: ReadableStream<Uint8Array>
-            ) { // : AsyncIterable<string>
-                const reader = body.getReader();
-                const decoder = new TextDecoder();
-
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) {
-                        break;
-                    }
-                    const decodedChunk = decoder.decode(value, { stream: true });
-                    yield decodedChunk;
-                }
-            }
-            console.log(3);
-            const generateStream = async () => { // : Promise<AsyncIterable<string>>
-                const response = await fetch(
-                    `${FAST_API_URL}/api/v1/chat/create_session/?user_id=john_doe`,
-                    {
-                        method: 'GET',
-                    }
-                );
-                console.log(response);
-                if (response.status !== 200) throw new Error(response.status.toString());
-                if (!response.body) throw new Error('Response body does not exist');
-                return getIterableStream(response.body);
-            }
-            console.log(4);
-            const stream = await generateStream();
-            console.log(5);
-            for await (const chunk of stream) {
-                ;
-                console.log(6);
-                console.log(chunk);
-            }
-        }
-
-        async function createSession5() {
-            console.log(2);
-            fetch(`${FAST_API_URL}/api/v1/chat/create_session/?user_id=john_doe`, { reactNative: { textStreaming: true } })
-                .then(response => console.log(response))
-                .then(stream => console.log(stream));
-        }
-
-        const createSession6 = async (message) => {
-            try {
-                console.log(2);
-                const response = await fetch(`${FAST_API_URL}/api/v1/chat/create_session/?user_id=john_doe`);
-                // if (!response.body) {
-                //     throw new Error("ReadableStream not yet supported in this browser.");
-                // }
-                const reader = response.body.getReader();
-                console.log(3);
-
-                let receivedData = "";
-                console.log(4);
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    console.log(5);
-
-                    if (done) {
-                        break;
-                    }
-                    console.log(6);
-
-                    receivedData += new TextDecoder().decode(value);
-                    setOutput(receivedData);
-                    console.log(output);
-                    const elem = document.getElementById("output");
-                    if (elem != null) {
-                        elem.scrollTop = elem.scrollHeight;
-                    }
-                    console.log(7);
-                }
-            } catch (error) {
-                console.error("Error fetching/streaming data:", error);
-            }
-        };
-
-        console.log(0);
-        // Call function to get permission
-        getPermission();
+        
         console.log(1);
-        createSession6();
-        console.log(99);
+        const socketIo = io("ws://0.0.0.0:8080", {
+            transports: ["websocket"],
+            path: "/ws/socket.io",
+        });
+        console.log(2);
+        socketIo.on('chatbot', (result) => {
+            let parsedResult = JSON.parse(result);
+            let type = parsedResult.type
 
+            if(type == "text") {
+                console.log(parsedResult.text)
+                setTextResponse(result.text);
+            }else if (type == "chunk") {
+                console.log("Got chunk with length " + parsedResult.chunk.length)
+                console.log(parsedResult.chunk)
+            }
+
+        });
+
+        socketIo.emit('chatbot', {
+            "user_id": "john_doe",
+            "command": "create_session"
+        });
+
+        setSocket(socketIo);
+
+        getPermission();
         return () => {
             if (recording) {
                 stopRecording();
@@ -290,17 +152,6 @@ const Conversation = () => {
             console.error('Failed to start recording', error);
         }
     }
-
-    useEffect(() => {
-        const startYO = async () => {
-            await setTimeout(() => {
-                setTimerDone(true);
-            }, 5000);
-        }
-        if (recordingStatus === 'recording') {
-            startYO();
-        }
-    }, [recordingStatus])
 
     async function stopRecording() {
         try {
@@ -341,7 +192,6 @@ const Conversation = () => {
 
     async function handleRecordButtonPress() {
         if (recording) {
-            setTimerDone(false);
             const audioUri = await stopRecording(recording);
             if (audioUri) {
                 console.log('Saved audio file to', savedUri);
@@ -397,9 +247,9 @@ const Conversation = () => {
                         style={styles.microphoneButton}
                     >
                         <Icon
-                            name={recording ? 'circle' : 'play'}
-                            size={recording ? 150 : 150}
-                            color="black"
+                            name={recording ? 'microphone' : 'microphone-slash'}
+                            size={200}
+                            color="red"
                         />
                     </TouchableOpacity>
                 </Animated.View>
@@ -418,11 +268,9 @@ const Conversation = () => {
                 >submit</Button>
                 }
 
-                {recordingStatus === 'recording' &&
-                <View flex={1} justifyContent={'flex-end'}>
-                    <TextArea value={userSpokenText} width={350} height={150} marginBottom={30} borderWidth={1} borderColor="black"/>
-                </View>
-                }
+                {/* {Object.keys(audioRefs).map(peerId => (
+                    <audio key={peerId} controls autoPlay ref={audioRefs[peerId]} style={{ display: 'none' }}></audio>
+                ))} */}
             </View>
         </TamaguiProvider>
     )
@@ -436,14 +284,9 @@ const styles = StyleSheet.create({
     },
     headerText: {
         fontSize: 30,
-        marginTop: 100,
+        marginTop: 50,
         paddingBottom: 100,
         fontWeight: 'bold',
-    },
-    pText: {
-        fontSize: 20,
-        padding: 30,
-        minHeight: 30
     },
     microphoneContainer: {
         marginTop: 20,

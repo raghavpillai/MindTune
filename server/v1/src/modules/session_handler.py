@@ -21,9 +21,10 @@ class SessionHandler:
         async for result in TTSHandler.generate_audio_async(chatbot.chat_completion(query), done_event=done_event):
             if 'text' in result:
                 print(result)
-                yield json.dumps(result)
+                yield json.dumps({"type": "text", "text": result['text']})
             elif 'chunk' in result:
                 yield json.dumps({
+                    'type': 'chunk', 
                     'chunk': base64.b64encode(result['chunk']).decode('utf-8')
                 })
         await done_event.wait()
@@ -71,7 +72,7 @@ class SessionHandler:
         async for result in cls.get_chatbot_response(user_id, "Let's start the session. Start asking me questions, one at a time so I can respond.", done_event):
             yield result
         
-        yield json.dumps({"status": "success"})
+        yield json.dumps({'type': 'status', "status": "success"})
         print("Fulfilled creating session")
 
         # questions = 0
