@@ -23,26 +23,26 @@ const Home = ({navigation}) => {
   });
 
   const startCheckInAnimations = () => {
-    Animated.sequence([
-      Animated.parallel([
-        Animated.timing(logoTranslateY, {
-          toValue: -300,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(buttonsTranslateY, {
-          toValue: 2000,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]),
+    // Animated.sequence([
+    //   Animated.parallel([
+    //     Animated.timing(logoTranslateY, {
+    //       toValue: -300,
+    //       duration: 500,
+    //       useNativeDriver: true,
+    //     }),
+    //     Animated.timing(buttonsTranslateY, {
+    //       toValue: 2000,
+    //       duration: 500,
+    //       useNativeDriver: true,
+    //     }),
+    //   ]),
 
-      Animated.timing(backgroundTranslateY, {
-        toValue: -800,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    //   Animated.timing(backgroundTranslateY, {
+    //     toValue: -800,
+    //     duration: 500,
+    //     useNativeDriver: true,
+    //   }),
+    // ]).start();
     navigation.navigate('Conversation');
   };
 
@@ -152,8 +152,8 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={Home} options={{ headerTitle: (props) => <></> }}/>
-        <Stack.Screen name="Conversation" component={Conversation} options={{ headerTitle: (props) => <></> }}/>
+        <Stack.Screen name="Home" component={Home} options={{ headerShown: false }}/>
+        <Stack.Screen name="Conversation" component={Conversation} options={{ headerShown: false }}/>
         <Stack.Screen name="EyeTracking" component={EyeTracking} options={{headerTitle: (props) => <></>}}/>
         <Stack.Screen name="Dashboard" component={Dashboard} options={{headerTitle: (props) => <></>}}/>
       </Stack.Navigator>
