@@ -11,6 +11,17 @@ import Conversation from "./Conversation";
 import EyeTracking from "./EyeTracking";
 import Dashboard from "./Dashboard";
 
+import { encode as btoa, decode as atob } from 'base-64';
+
+if (!global.btoa) {
+    global.btoa = btoa;
+}
+
+if (!global.atob) {
+    global.atob = atob;
+}
+
+
 const Home = ({navigation}) => {
 
   const buttonsTranslateY = useRef(new Animated.Value(300)).current;
