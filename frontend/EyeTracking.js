@@ -70,14 +70,16 @@ const EyeTracking = ({navigation}) => {
         if (!videoURI) return;
 
         const data = new FormData();
-        data.append('file', {
+        data.append('videofile', {
             uri: videoURI,
             name: 'video.mov',
             type: 'video/mov',
         });
 
+        // FileSystem.
+
         try {
-            const response = await axios.post(`${FAST_API_URL}/upload_video/`, data);
+            const response = await axios.post(`https://shreyj1729--mind-tune-get-eyetracking-results-dev.modal.run`, data);
             console.log('Uploaded and transcribed: ', response.data);
             navigation.navigate("Dashboard");
         } catch (error) {

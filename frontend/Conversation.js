@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, ImageBackground, Animated, Text, TouchableOpacity } from "react-native";
-import { TamaguiProvider } from "tamagui";
+import { TamaguiProvider, TextArea } from "tamagui";
 import config from "./tamagui.config";
 import { Button, XStack, Image } from "tamagui";
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -11,16 +11,20 @@ import axios from 'axios';
 import { FAST_API_URL } from "./constants";
 
 const MAX_SCALE = 1.5; // maximum scale when loud
-const MIN_SCALE = 0.8; // minimum scale when quiet
+const MIN_SCALE = 0.4; // minimum scale when quiet
 const MAX_DB = -10; // quite loud
-const MIN_DB = -60; // very quiet
+const MIN_DB = -70; // very quiet
 
 const Conversation = () => {
     const [recording, setRecording] = useState(null);
     const [recordingStatus, setRecordingStatus] = useState('idle');
     const [audioPermission, setAudioPermission] = useState(null);
+    const [curAudio, setCurAudio] = useState("");
+    const [userSpokenText, setUserSpokenText] = useState("");
+    const [timerDone, setTimerDone] = useState("");
 
     const [microphoneScale] = useState(new Animated.Value(1));
+
 
     const startRecordingAnim = () => {
         Animated.loop(
@@ -41,6 +45,7 @@ const Conversation = () => {
 
     const stopRecordingAnim = () => {
         microphoneScale.stopAnimation();
+        setCurAudio("");
     };
 
     const onStatusUpdate = (status) => {
@@ -48,12 +53,17 @@ const Conversation = () => {
         
         const scaleValue = normalizedValue * (MAX_SCALE - MIN_SCALE) + MIN_SCALE;
 
-        console.log(scaleValue);
+        if (scaleValue > 1.3) {
+            setCurAudio("listening...")
+            setUserSpokenText(scaleValue.toString());
+        } else {
+            setCurAudio("start speaking...")
+        }
 
         if (typeof scaleValue === 'number' && scaleValue > 0 && scaleValue < 2) {
             Animated.timing(microphoneScale, {
                 toValue: scaleValue,
-                duration: 5,
+                duration: 3,
                 useNativeDriver: true,
             }).start();
         }
@@ -106,6 +116,17 @@ const Conversation = () => {
         }
     }
 
+    useEffect(() => {
+        const startYO = async () => {
+            await setTimeout(() => {
+                setTimerDone(true);
+            }, 5000);
+        }
+        if (recordingStatus === 'recording') {
+            startYO();
+        }
+    }, [recordingStatus])
+
     async function stopRecording() {
         try {
             if (recordingStatus === 'recording') {
@@ -145,6 +166,7 @@ const Conversation = () => {
 
     async function handleRecordButtonPress() {
         if (recording) {
+            setTimerDone(false);
             const audioUri = await stopRecording(recording);
             if (audioUri) {
                 console.log('Saved audio file to', savedUri);
@@ -200,12 +222,31 @@ const Conversation = () => {
                         style={styles.microphoneButton}
                     >
                         <Icon
-                            name={recording ? 'microphone' : 'microphone-slash'}
-                            size={200}
-                            color="red"
+                            name={recording ? 'circle' : 'play'}
+                            size={recording ? 150 : 150}
+                            color="black"
                         />
                     </TouchableOpacity>
                 </Animated.View>
+                {!timerDone ? <Text style={styles.pText}>{curAudio}</Text> :
+                <Button
+                        onPress={handleRecordButtonPress}
+                        textAlign='center'
+                        fontSize={20}
+                        width={140}
+                        color={"black"}
+                        backgroundColor={"transparent"}
+                        borderWidth={1}
+                        borderColor={"black"}
+                        display={"block"}
+                >submit</Button>
+                }
+
+                {recordingStatus === 'recording' &&
+                <View flex={1} justifyContent={'flex-end'}>
+                    <TextArea value={userSpokenText} width={350} height={150} marginBottom={30} borderWidth={1} borderColor="black"/>
+                </View>
+                }
             </View>
         </TamaguiProvider>
     )
@@ -219,9 +260,14 @@ const styles = StyleSheet.create({
     },
     headerText: {
         fontSize: 30,
-        marginTop: 50,
+        marginTop: 100,
         paddingBottom: 100,
         fontWeight: 'bold',
+    },
+    pText: {
+        fontSize: 20,
+        padding: 30,
+        minHeight: 30
     },
     microphoneContainer: {
         marginTop: 20,
