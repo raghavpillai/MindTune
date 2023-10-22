@@ -79,7 +79,7 @@ const Conversation = () => {
         }
         
         console.log(1);
-        const socketIo = io("ws://0.0.0.0:8080", {
+        const socketIo = io(`wss://${FAST_API_URL}/`, {
             transports: ["websocket"],
             path: "/ws/socket.io",
         });
@@ -210,7 +210,7 @@ const Conversation = () => {
         });
 
         try {
-            const response = await axios.post(`${FAST_API_URL}/api/v1/upload_audio/`, data);
+            const response = await axios.post(`https://${FAST_API_URL}/api/v1/upload_audio`, data);
             console.log('Uploaded and transcribed: ', response.data);
             socket.emit('chatbot', {
                 "user_id": "john_doe",

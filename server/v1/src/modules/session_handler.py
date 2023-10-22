@@ -33,8 +33,6 @@ class SessionHandler:
             yield json.dumps({'type': 'status', "status": "success"})
             yield json.dumps({'type': 'ending', "status": "success"})
             await done_event.wait()
-
-        
         
 
         done_event.clear()
