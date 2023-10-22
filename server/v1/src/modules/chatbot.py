@@ -8,8 +8,8 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 openai.api_key = OPENAI_API_KEY
 
-class OpenAIModule:
-    messages: List[Dict] = [
+class Chatbot:
+    messages: List[Dict[str, str]] = [
         {"role": "system", "content": 
         """Your name is Alice.
         You are a helpful physician assistant specializing in alzheimers designed to be used in a text to speech environment.
@@ -19,21 +19,18 @@ class OpenAIModule:
         """},
     ]
 
-    @classmethod
-    def add_message(cls, message: str) -> None:
-        cls.messages.append({"role": "user", "content": message})
+    def add_message(self, message: str) -> None:
+        self.messages.append({"role": "user", "content": message})
 
-    @classmethod
-    def add_system_message(cls, message: str) -> None:
-        cls.messages.append({"role": "system", "content": message})
+    def add_system_message(self, message: str) -> None:
+        self.messages.append({"role": "system", "content": message})
 
-    @classmethod
-    async def chat_completion(cls, query: str) -> AsyncGenerator[str, None]:
-        cls.messages.append({"role": "user", "content": query})
+    async def chat_completion(self, query: str) -> AsyncGenerator[str, None]:
+        self.messages.append({"role": "user", "content": query})
 
         response: openai.ChatCompletion = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
-            messages=cls.messages,
+            messages=self.messages,
             temperature=0.3,
             stream=True
         )
@@ -41,19 +38,19 @@ class OpenAIModule:
 
         async for chunk in response:
             delta: Dict[str, Any] = chunk['choices'][0]["delta"]
-            if 'content' in delta:
-                assistant_response += delta["content"]
-                yield delta["content"]
-            else:
+            if 'content' not in delta:
                 break
-        
+            
+            assistant_response += delta["content"]
+            yield delta["content"]
         if assistant_response:
-            cls.messages.append({"role": "assistant", "content": assistant_response})
+            self.messages.append({"role": "assistant", "content": assistant_response})
     
 
 if __name__ == "__main__":
+    chatbot: Chatbot = Chatbot()
     async def main():
-        async for text in OpenAIModule.chat_completion("What's up?"):
+        async for text in chatbot.chat_completion("What's up?"):
             print(text)
     
     asyncio.run(main())

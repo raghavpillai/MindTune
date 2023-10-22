@@ -33,7 +33,6 @@ class Persistence:
 
     @classmethod
     def get_all_users(cls) -> List[Dict[str, Union[str, int, List[Dict[str, Union[str, int]]]]]]:
-        cls.initialize()
         conn = sqlite3.connect(DATABASE_PATH)
         c = conn.cursor()
 
@@ -59,6 +58,7 @@ class Persistence:
 
         user_id, first_name, last_name, age, city, phone, score = user
         user_dict = {
+            'user_id': user_id,
             'first_name': first_name,
             'last_name': last_name,
             'age': age,
@@ -100,7 +100,7 @@ class Persistence:
     def initialize(cls) -> None:
         if not os.path.exists("../data"):
             os.makedirs("../data")
-        if not os.path.exists(DATABASE_PATH):
+        if os.path.exists(DATABASE_PATH):
             conn = sqlite3.connect(DATABASE_PATH)
             c = conn.cursor()
 
@@ -114,6 +114,7 @@ class Persistence:
                         FOREIGN KEY (user_id) REFERENCES users(user_id))""")
             
             conn.close()
+            generate_dummy_data()
 
 def generate_dummy_data():
     names = [("John", "Doe"), ("Jane", "Smith"), ("Alice", "Johnson"), ("Bob", "White"), ("Charlie", "Brown"),
