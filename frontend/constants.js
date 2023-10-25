@@ -1,3 +1,3 @@
-const FAST_API_URL = "http://0.0.0.0:8080"
+const FAST_API_URL = "https://de6f-129-110-241-55.ngrok-free.app"
 
 export { FAST_API_URL }

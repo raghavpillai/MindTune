@@ -80,7 +80,7 @@ const EyeTracking = ({navigation}) => {
         // FileSystem.
 
         try {
-            const response = await axios.post(`https://shreyj1729--mind-tune-get-eyetracking-results-dev.modal.run`, data);
+            const response = await axios.post(`https://raghavpillai--mind-tune-get-eyetracking-results-dev.modal.run`, data);
             console.log('Uploaded and transcribed: ', response.data);
             navigation.navigate("Dashboard", {data: response.data});
         } catch (error) {

@@ -31,7 +31,7 @@ class TTSHandler:
         def tts_thread_fn():
             audio_stream = generate(
                 text=cls._sync_stream(speak_queue, condition),
-                voice="Nicole",
+                voice="Bella",
                 model="eleven_monolingual_v1",
                 stream=True
             )
@@ -52,6 +52,7 @@ class TTSHandler:
         full_text = ""
         async for text in text_stream_fn:
             sentence_buffer += text
+            yield {'type': 'partial-text', "text": full_text}
             full_text += text
             while re.search(r'[.!?]', sentence_buffer):
                 sentence, _, remainder = re.split(r'([.!?])', sentence_buffer, 1)
@@ -69,7 +70,7 @@ class TTSHandler:
         with condition:
             speak_queue.append(None)  # Signal end of text
             condition.notify()
-
+        
         yield {'type': 'text', 'text': full_text}
         while True:  # Yield audio chunks
             with condition:

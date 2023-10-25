@@ -17,22 +17,27 @@ class SessionHandler:
             yield "User not found"
             return
         chatbot = cls.chatbot_sessions[user_id]
+        if cls.question_count > 3:
+            return
         
-        if cls.question_count > 5:
+        if cls.question_count == 3:
             done_event.clear()
-            async for result in TTSHandler.generate_audio_async(chatbot.chat_completion(f"{query}. That's my last question. Say thank for my time and you'll be in touch."), done_event=done_event):
+            async for result in TTSHandler.generate_audio_async(chatbot.chat_completion(f"{query}. That's my last question. Say thank for my time and you'll be in touch, and don't mention you're an AI. Pretend like you're a professional and give me decisive answers. Say I may have alzheimers and say why, and that you're telling my doctor. Then say questions did I get wrong on the cognative portion but say my optical test was normal."), done_event=done_event):
                 if 'text' in result:
                     print(result)
                     yield json.dumps({"type": "text", "text": result['text']})
+                if 'partial-text' in result:
+                    yield json.dumps({"type": "partial-text", "text": result['partial-text']})
                 elif 'chunk' in result:
                     yield json.dumps({
                         'type': 'chunk', 
                         'chunk': base64.b64encode(result['chunk']).decode('utf-8')
                     })
-            cls.question_count += 1
             yield json.dumps({'type': 'status', "status": "success"})
             yield json.dumps({'type': 'ending', "status": "success"})
+            cls.question_count += 1
             await done_event.wait()
+            return
         
 
         done_event.clear()
@@ -45,7 +50,7 @@ class SessionHandler:
                     'type': 'chunk', 
                     'chunk': base64.b64encode(result['chunk']).decode('utf-8')
                 })
-        cls.question_count += 4
+        cls.question_count += 1
         yield json.dumps({'type': 'status', "status": "success"})
         await done_event.wait()
 
@@ -85,26 +90,11 @@ class SessionHandler:
             """
             Greet me with my name,
             welcome me back and tell me something along the lines of you're looking forward to getting started with their checkup and let's begin. 
+            Begin the Alzheimer's test now. Let's start the session. Start asking me questions, one at a time so I can respond. Ask me if I'm ready. 
             """, done_event):
             yield result
         
-        chatbot.add_system_message("Begin the Alzheimer's test now.")
-        async for result in cls.get_chatbot_response(user_id, "Let's start the session. Start asking me questions, one at a time so I can respond.", done_event):
-            yield result
-        
         print("Fulfilled creating session")
-
-        # questions = 0
-        # while questions < 5:
-        #     user_response = input("Your response: ")
-        #     done_event.clear()
-        #     await TTSHandler.generate_audio_async(OpenAIModule.chat_completion(f"My answer: {user_response}. Give me a short but caring response to it without telling me if it's right or wrong, then ask me my next question."), done_event=done_event)
-        #     done_event.wait()  # Wait until the audio is done
-        #     questions += 1
-        
-        # done_event.clear()
-        # await TTSHandler.generate_audio_async(OpenAIModule.chat_completion(f"What questions did I get wrong on the cognative portion and can you provide professional feedback for the doctor for the ones I got wrong? And then state if you think I have alzheimers or not. State this in the third person."), done_event=done_event)
-        # done_event.wait()
 
 
 if __name__ == "__main__":

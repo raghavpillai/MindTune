@@ -145,7 +145,7 @@ const Home = ({navigation}) => {
                 color={"$blue9"}
                 onPress={() => navigation.navigate('EyeTracking')}
               >
-                See Your Progress
+                Optical Exam
               </Button>
             </XStack>
           </Animated.View>

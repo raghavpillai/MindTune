@@ -27,6 +27,7 @@ const Conversation = () => {
     const [socket, setSocket] = useState(null);
     const [message, setMessage] = useState('');
     const [textResponse, setTextResponse] = useState('');
+    const [arr, SetArr] = useState([]);
 
     const [microphoneScale] = useState(new Animated.Value(1));
 
@@ -75,19 +76,22 @@ const Conversation = () => {
             });
         }
         
-        console.log(1);
         const socketIo = io(`${FAST_API_URL}`, {
             transports: ["websocket"],
             path: "/ws/socket.io",
         });
-        console.log(2);
+        
         socketIo.on('chatbot', (result) => {
             let parsedResult = JSON.parse(result);
             let type = parsedResult.type
 
             if(type == "text") {
                 console.log(parsedResult.text)
-                setTextResponse(result.text);
+                setTextResponse(parsedResult.text);
+                SetArr(arr.concat([parsedResult.text]));
+                console.log(arr);
+            }else if (type == "partial-text") {
+                setTextResponse(parsedResult.text);
             }else if (type == "chunk") {
                 console.log("Got chunk with length " + parsedResult.chunk.length)
                 total += parsedResult.chunk;
@@ -111,7 +115,6 @@ const Conversation = () => {
             }
         };
     }, []);
-
 
     async function startRecording() {
         try {
@@ -219,6 +222,8 @@ const Conversation = () => {
                 "command": "get_response",
                 "query": response.data.message.transcription
             });
+
+            setUserSpokenText(response.data.message.transcription);
             
 
         } catch (error) {
@@ -242,7 +247,7 @@ const Conversation = () => {
     return (
         <TamaguiProvider config={config}>
             <View style={styles.container}>
-                <Text style={styles.headerText}>How's your day going?</Text>
+                <Text style={styles.headerText}>{textResponse}</Text>
                 <Animated.View
                     style={[
                         styles.microphoneContainer,
@@ -260,25 +265,12 @@ const Conversation = () => {
                         />
                     </TouchableOpacity>
                 </Animated.View>
-                {!timerDone ? <Text style={styles.pText}>{curAudio}</Text> :
-                <Button
-                        onPress={handleRecordButtonPress}
-                        textAlign='center'
-                        fontSize={20}
-                        width={140}
-                        color={"black"}
-                        backgroundColor={"transparent"}
-                        borderWidth={1}
-                        borderColor={"black"}
-                        display={"block"}
-                >submit</Button>
-                }
+                <Text style={styles.pText}>{curAudio}</Text>
 
-                {recordingStatus === 'recording' &&
+
                 <View flex={1} justifyContent={'flex-end'}>
                     <TextArea value={userSpokenText} width={350} height={150} marginBottom={30} borderWidth={1} borderColor="black"/>
                 </View>
-                }
 
                 {/* {Object.keys(audioRefs).map(peerId => (
                     <audio key={peerId} controls autoPlay ref={audioRefs[peerId]} style={{ display: 'none' }}></audio>
@@ -296,9 +288,9 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
     },
     headerText: {
-        fontSize: 30,
+        fontSize: 18,
         marginTop: 100,
-        paddingBottom: 100,
+        paddingBottom: 40,
         fontWeight: 'bold',
     },
     pText: {
