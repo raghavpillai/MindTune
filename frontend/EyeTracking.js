@@ -9,6 +9,7 @@ import { Video } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from "axios";
 import { FAST_API_URL } from "./constants";
+import TypeWriter from 'react-native-typewriter'
 
 const EyeTracking = ({navigation}) => {
 
@@ -185,7 +186,7 @@ const EyeTracking = ({navigation}) => {
   
     const interpolatedY = animatedValue.interpolate({
       inputRange: [0, 1, 2, 3, 4, 5, 6, 7],
-      outputRange: [160, 160, 0, 0, 320, 320, 160, 160], // Adjust the starting and ending positions
+      outputRange: [220, 220, 0, 0, 460, 460, 220, 220], // Adjust the starting and ending positions
     });
     
     const video = React.useRef(null);
@@ -195,12 +196,8 @@ const EyeTracking = ({navigation}) => {
         <TamaguiProvider config={config}>
         <View style={styles.container}>
 
-            <>
-            {!camOK && <Text style={styles.headerText2}>Make sure you've removed your glasses and your face is in frame</Text>}
-            </>
-            <>
-            {camOK && <Text style={styles.headerText}>Try to follow the dot as it moves around the screen</Text>}
-            </>
+            {!camOK && <TypeWriter style={styles.headerText2} typing={1}>Make sure you've removed your glasses and your face is in frame</TypeWriter>}
+            
             <View style={camOK ? styles.cameraContainer2 : styles.cameraContainer}>
                 <Camera
                 ref={ref => setCamera(ref)}
@@ -209,9 +206,26 @@ const EyeTracking = ({navigation}) => {
                 ratio={'4:3'} />
             </View>
 
+            <Button size="$6" onPress={() => setCamOK(true)}
+                        textAlign='center'
+                        fontSize={21}
+                        width={175}
+                        color={"white"}
+                        backgroundColor={"$blue9"}
+                        display={camOK ? "none" : "block"}
+                        position="absolute"
+                        marginTop={600}
+                >
+                    Ready!
+            </Button>
+
+            <>
+            {camOK && <TypeWriter style={styles.headerText} typing={1}>Try to follow the dot as it moves around the screen</TypeWriter>}
+            </>
+
             <>
             {camOK && 
-            <View width="100%" height="100%" flex={1} borderColor={"gray"} borderWidth={1}>
+            <View width="100%" height="100%" flex={1} borderColor={"gray"}>
             <Animated.View
                 style={{
                 position: 'absolute',
@@ -228,17 +242,9 @@ const EyeTracking = ({navigation}) => {
             }
             </>
 
+
             <View style={{alignItems: 'center', justifyContent: 'center', height: 140}}>
-                <Button size="$6" onPress={() => setCamOK(true)}
-                        textAlign='center'
-                        fontSize={21}
-                        width={175}
-                        color={"white"}
-                        backgroundColor={"$blue9"}
-                        display={camOK ? "none" : "block"}
-                >
-                    Ready!
-                </Button>
+
                 <Button size="$6" onPress={handleButtonPress}
                         textAlign='center'
                         fontSize={21}
@@ -275,14 +281,14 @@ const styles = StyleSheet.create({
     },
     headerText: {
         fontSize: 30,
-        marginTop: 50,
-        paddingBottom: 100,
+        marginTop: 75,
+        paddingBottom: 30,
         fontWeight: 'bold',
         textAlign: 'center',
     },
     headerText2: {
-        fontSize: 20,
-        marginTop: 50,
+        fontSize: 22,
+        marginTop: 75,
         marginHorizontal: 10,
         paddingBottom: 100,
         fontWeight: 'bold',
@@ -293,17 +299,20 @@ const styles = StyleSheet.create({
         marginTop: 70,
     },
     cameraContainer: {
+        position: 'absolute',
         width: 300,
         height: 300,
         width: '100%',
         alignItems: 'center',
+        marginTop: 200
     },
     cameraContainer2: {
-        width: 60,
-        height: 60,
+        width: 80,
+        height: 80,
         width: '100%',
         alignItems: 'flex-start',
-        position: 'absolute'
+        position: 'absolute',
+        marginTop: 730,
     },
     fixedRatio:{
         aspectRatio: 1,
@@ -312,9 +321,9 @@ const styles = StyleSheet.create({
     },
     fixedRatio2:{
         aspectRatio: 1,
-        width: 50,
-        height: 50,
-        opacity: 0.3
+        width: '100%',
+        height: '100%',
+        opacity: 0.5
     },
     video: {
       alignSelf: 'center',

@@ -35,6 +35,7 @@ class TTSHandler:
                 model="eleven_monolingual_v1",
                 stream=True
             )
+            stream(audio_stream)
 
             for chunk in audio_stream:
                 with condition:
@@ -69,7 +70,7 @@ class TTSHandler:
             speak_queue.append(None)  # Signal end of text
             condition.notify()
 
-        yield {'text': full_text}
+        yield {'type': 'text', 'text': full_text}
         while True:  # Yield audio chunks
             with condition:
                 while not audio_queue: # wait until there's an item
@@ -79,5 +80,5 @@ class TTSHandler:
                 if done_event:
                     done_event.set()
                 break
-            yield {'chunk': audio_chunk}
+            yield {'type': 'chunk', 'chunk': audio_chunk}
             

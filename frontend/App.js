@@ -2,7 +2,7 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import React, { useEffect, useRef } from "react";
 import { StyleSheet, View, ImageBackground, Animated } from "react-native";
-import { TamaguiProvider } from "tamagui";
+import { TamaguiProvider, TextArea } from "tamagui";
 import config from "./tamagui.config";
 import { Button, XStack, Image } from "tamagui";
 import { NavigationContainer } from "@react-navigation/native";
@@ -10,6 +10,18 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Conversation from "./Conversation";
 import EyeTracking from "./EyeTracking";
 import Dashboard from "./Dashboard";
+import Dashboard2 from "./Dashboard2";
+
+import { encode as btoa, decode as atob } from 'base-64';
+
+if (!global.btoa) {
+    global.btoa = btoa;
+}
+
+if (!global.atob) {
+    global.atob = atob;
+}
+
 
 const Home = ({navigation}) => {
 
@@ -96,7 +108,6 @@ const Home = ({navigation}) => {
                 transform: [{ translateY: logoTranslateY }],
               }}
             >
-              
               <Image
                 style={{
                   resizeMode: "cover",
@@ -154,8 +165,9 @@ export default function App() {
       <Stack.Navigator initialRouteName="Home">
         <Stack.Screen name="Home" component={Home} options={{ headerShown: false }}/>
         <Stack.Screen name="Conversation" component={Conversation} options={{ headerShown: false }}/>
-        <Stack.Screen name="EyeTracking" component={EyeTracking} options={{headerTitle: (props) => <></>}}/>
+        <Stack.Screen name="EyeTracking" component={EyeTracking} options={{headerShown: false}}/>
         <Stack.Screen name="Dashboard" component={Dashboard} options={{headerTitle: (props) => <></>}}/>
+        <Stack.Screen name="Dashboard2" component={Dashboard2} options={{headerTitle: (props) => <></>}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
