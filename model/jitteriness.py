@@ -21,6 +21,7 @@ def compute_jitteriness_from_linear_movement(data, window_size):
         # Defining the line by its start and end point
         A, B = np.array(start), np.array(end)
         n = B - A
+        n = n.astype(np.float64)
         n /= np.linalg.norm(n)
         
         # Calculate the perpendicular distance for each point in the segment

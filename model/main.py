@@ -1,3 +1,4 @@
+import time
 import subprocess
 import shutil
 from typing import Annotated
@@ -67,6 +68,8 @@ image = (
 )
 
 stub = modal.Stub(name="mind-tune", mounts=mounts, image=image)
+stub.gaze_coords = modal.Dict.new()
+stub.user_video_data = modal.Dict.new()
 
 
 @stub.function()
@@ -76,13 +79,43 @@ def heartbeat():
 
 @stub.function()
 @modal.web_endpoint(method="GET")
-def command(command: str):
-    print("running command ", command)
-    subprocess.run(command, shell=True)
+def dir_gaze_data(user_id: str):
+    print("gaze data requested, user_id: ", user_id)
+    if user_id in stub.gaze_coords:
+        return str(stub.gaze_coords[user_id])
+    else:
+        return "no gaze data found for user id"
+
+
+@stub.function()
+@modal.web_endpoint(method="GET")
+def dir_gaze_video(user_id: str):
+    print("video data requested, user_id: ", user_id)
+    if user_id in stub.user_video_data:
+        raw_bytes = stub.user_video_data[user_id]
+        with open("output.mp4", "wb") as f:
+            f.write(raw_bytes)
+        return FileResponse(path="output.mp4", filename="gaze_video.mp4", media_type="video/mp4")
+    else:
+        return "no video data found for user id"
+
+@stub.function()
+@modal.web_endpoint(method="GET")
+def clear_gaze_data():
+    stub.gaze_coords = modal.Dict.new()
+    return "cleared gaze data"
+
+
+@stub.function()
+@modal.web_endpoint(method="GET")
+def clear_video_data():
+    stub.user_video_data = modal.Dict.new()
+    return "cleared video data"
+
 
 @stub.function(cpu=16, memory=8096, gpu="T4", container_idle_timeout=60)
 @modal.web_endpoint(method="POST")
-def get_eyetracking_results(videofile: UploadFile = File(...)):
+def get_eyetracking_results(videofile: UploadFile = File(...), user_id: str = "john_doe"):
     print("receieved filename ", videofile.filename)
     import torch
     from torch.nn import DataParallel
@@ -262,14 +295,12 @@ def get_eyetracking_results(videofile: UploadFile = File(...)):
         frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray)
+        gaze_coords = []
 
 
         if len(faces):
             next_face = faces[0]
             if current_face is not None:
-                print("alpha 0.95 is ", type(0.95))
-                print(type(next_face))
-                print(type(current_face))
                 current_face = 0.95 * next_face + (1 - 0.95) * current_face
             else:
                 current_face = next_face
@@ -296,6 +327,8 @@ def get_eyetracking_results(videofile: UploadFile = File(...)):
                 left_eye = smooth_eye_landmarks(left_eyes[0], left_eye, smoothing=0.1)
             if right_eyes:
                 right_eye = smooth_eye_landmarks(right_eyes[0], right_eye, smoothing=0.1)
+            
+            # left eye, right eye
 
             for ep in [left_eye, right_eye]:
                 for (x, y) in ep.landmarks[16:33]:
@@ -318,7 +351,18 @@ def get_eyetracking_results(videofile: UploadFile = File(...)):
                     orig_frame, ep.landmarks[-2], gaze, length=60.0, thickness=2
                 )
 
-        return orig_frame, current_face, landmarks, left_eye, right_eye
+                # compute end of gaze vector and add coords to gaze_coords for each eye
+                image_out = orig_frame
+                if len(image_out.shape) == 2 or image_out.shape[2] == 1:
+                    image_out = cv.cvtColor(image_out, cv.COLOR_GRAY2BGR)
+                dx = -60 * np.sin(gaze[1])
+                dy = 60 * np.sin(gaze[0])
+                coords = tuple(np.round([ep.landmarks[-2][0] + dx, ep.landmarks[-2][1] + dy]).astype(int))
+                print("coords, ", coords)
+                gaze_coords.append(coords)
+        
+        print('returning gaze coorsd, ', gaze_coords)
+        return orig_frame, current_face, landmarks, left_eye, right_eye, gaze_coords
 
     # save video file to disk
     video_path = "/greedy_vs_ddpg.mov"
@@ -343,13 +387,15 @@ def get_eyetracking_results(videofile: UploadFile = File(...)):
     landmarks = None
     left_eye = None
     right_eye = None
+    gaze_coords = None
     width = video.get(cv2.CAP_PROP_FRAME_WIDTH )
     height = video.get(cv2.CAP_PROP_FRAME_HEIGHT )
     fps =  video.get(cv2.CAP_PROP_FPS)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
     out = cv2.VideoWriter('output.mp4', fourcc, fps, (int(width), int(height)))
-
+    gaze_data_dict_temp = []
+    
     while video.isOpened():
         print("processing frame number: ", video.get(cv2.CAP_PROP_POS_FRAMES), " / ", video.get(cv2.CAP_PROP_FRAME_COUNT)) 
 
@@ -357,18 +403,46 @@ def get_eyetracking_results(videofile: UploadFile = File(...)):
             break
 
         _, frame_bgr = video.read()
-        annotated_frame, current_face, landmarks, left_eye, right_eye = process_frame(frame_bgr, current_face, landmarks, left_eye, right_eye)
+        annotated_frame, current_face, landmarks, left_eye, right_eye, gaze_coords = process_frame(frame_bgr, current_face, landmarks, left_eye, right_eye)
+        
         out.write(annotated_frame)
+        gaze_data_dict_temp.append(gaze_coords)
 
         print("processed to annotated_frame ", annotated_frame.shape)
     
     out.release()
     video.release()
+    temp_user_dict = {}
+    if user_id in stub.gaze_coords:
+        temp_user_dict = stub.gaze_coords[user_id]
+    
+    # gaze data dict temp is [((lx, ly), (rx, ry)), ((lx, ly), (rx, ry)), ...))]
+    gaze_data_dict_temp = [i for i in gaze_data_dict_temp if i != []]
+    temp_user_dict = {"gaze_data": gaze_data_dict_temp}
 
-    print(os.system("du -sh output.mp4"))
+    print("GAZE DATA DICT_TEMP UPDATE, ", gaze_data_dict_temp)
 
     # send gaze tracking data somewhere to be processed for jitteriness
-    # compute_jitteriness_score(gaze_tracking_data)
+    left_eye_coords = np.array([i[0] for i in gaze_data_dict_temp])
+    right_eye_coords = np.array([i[1] for i in gaze_data_dict_temp])
+        
+
+    print("eye coords: ", left_eye_coords.shape)
+
+    jitteriness_score = np.array(compute_jitteriness_from_linear_movement(left_eye_coords, 60)) + np.array(compute_jitteriness_from_linear_movement(right_eye_coords, 60))/2
+    temp_user_dict["jitteriness_score"] = jitteriness_score.tolist()
+    temp_user_dict["smoothed_jitteriness_score"] = apply_smoothing(jitteriness_score, 10).tolist()
+
+    # update final stub dict with all data
+    stub.gaze_coords[user_id] = temp_user_dict
+
+    # now convert video to bytes and add to stub dict
+    print("writing video bytes to dict")
+    with open("output.mp4", "rb") as f:
+        video_bytes = f.read()
+        print('read video bytes', video_bytes[:10])
+        stub.user_video_data[user_id] = video_bytes
+        print('sent updated dict')
 
     # return mp4 file with gaze tracking annotations
     return FileResponse(path="output.mp4", filename="output.mp4", media_type="video/mp4")
