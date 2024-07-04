@@ -1,3 +1,4 @@
+Devpost Link: https://devpost.com/software/mindtune
 ## Inspiration
 Alzheimer's is a very interesting, scary disease. There's no decided cause for the neuro-degenerative disease among scientists, and neither is there any cure. And on a personal level, we've all met people before who have had family members either currently or previously suffering from Alzheimer's. Inspired by this and the health challenges posted at this hackathon, we decided to come up with a tool to help with Alzheimer's diagnosis and recovery efforts.
 
